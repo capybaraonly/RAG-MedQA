@@ -1,0 +1,67 @@
+
+#
+import random
+
+import pytest
+from test_common import get_recent_message
+from configs import INVALID_API_TOKEN
+from libs.auth import RAG-MedQAWebApiAuth
+
+
+class TestAuthorization:
+    @pytest.mark.p2
+    @pytest.mark.parametrize(
+        "invalid_auth, expected_code, expected_message",
+        [
+            (None, 401, "<Unauthorized '401: Unauthorized'>"),
+            (RAG-MedQAWebApiAuth(INVALID_API_TOKEN), 401, "<Unauthorized '401: Unauthorized'>"),
+        ],
+    )
+    def test_auth_invalid(self, invalid_auth, expected_code, expected_message):
+        res = get_recent_message(invalid_auth)
+        assert res["code"] == expected_code, res
+        assert res["message"] == expected_message, res
+
+
+@pytest.mark.usefixtures("add_memory_with_5_raw_message_func")
+class TestGetRecentMessage:
+
+    @pytest.mark.p1
+    def test_get_recent_messages(self, WebApiAuth):
+        memory_id = self.memory_id
+        res = get_recent_message(WebApiAuth, params={"memory_id": memory_id})
+        assert res["code"] == 0, res
+        assert len(res["data"]) == 5, res
+
+    @pytest.mark.p2
+    def test_filter_recent_messages_by_agent(self, WebApiAuth):
+        memory_id = self.memory_id
+        agent_ids = self.agent_ids
+        agent_id = random.choice(agent_ids)
+        res = get_recent_message(WebApiAuth, params={"agent_id": agent_id, "memory_id": memory_id})
+        assert res["code"] == 0, res
+        for message in res["data"]:
+            assert message["agent_id"] == agent_id, message
+
+    @pytest.mark.p2
+    def test_filter_recent_messages_by_session(self, WebApiAuth):
+        memory_id = self.memory_id
+        session_ids = self.session_ids
+        session_id = random.choice(session_ids)
+        res = get_recent_message(WebApiAuth, params={"session_id": session_id, "memory_id": memory_id})
+        assert res["code"] == 0, res
+        for message in res["data"]:
+            assert message["session_id"] == session_id, message
+
+    @pytest.mark.p2
+    def test_get_recent_messages_missing_memory_id(self, WebApiAuth):
+        res = get_recent_message(WebApiAuth, params={})
+        assert res["code"] == 101, res
+        assert "memory_ids is required" in res["message"], res
+
+    @pytest.mark.p2
+    def test_get_recent_messages_csv_memory_ids(self, WebApiAuth):
+        memory_id = self.memory_id
+        res = get_recent_message(WebApiAuth, params={"memory_id": f"{memory_id},{memory_id}"})
+        assert res["code"] == 0, res
+        assert isinstance(res["data"], list), res
