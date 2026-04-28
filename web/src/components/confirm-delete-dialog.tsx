@@ -13,7 +13,7 @@ import {
 import { DialogProps } from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { RAG-MedQAAvatar } from './RAG-MedQA-avatar';
+import { RagMedQAAvatar } from './ragflow-avatar';
 import { Separator } from './ui/separator';
 
 interface IProps {
@@ -132,7 +132,7 @@ export const ConfirmDeleteDialogNode = ({
       {(avatar || name) && (
         <div className="flex items-center border-0.5 text-text-secondary border-border-button rounded-lg px-3 py-4">
           {avatar && (
-            <RAG-MedQAAvatar
+            <RagMedQAAvatar
               className="w-8 h-8"
               avatar={avatar.avatar}
               isPerson={avatar.isPerson}

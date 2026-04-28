@@ -7,12 +7,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { RAG-MedQASelect, RAG-MedQASelectOptionType } from '@/components/ui/select';
+import {
+  RagMedQASelect,
+  RagMedQASelectOptionType,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type RAG-MedQAPaginationType = {
+export type RagMedQAPaginationType = {
   showQuickJumper?: boolean;
   onChange?(page: number, pageSize: number): void;
   total?: number;
@@ -21,18 +24,18 @@ export type RAG-MedQAPaginationType = {
   showSizeChanger?: boolean;
 };
 
-export function RAG-MedQAPagination({
+export function RagMedQAPagination({
   current = 1,
   pageSize = 5,
   total = 0,
   onChange,
   showSizeChanger = true,
-}: RAG-MedQAPaginationType) {
+}: RagMedQAPaginationType) {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPageSize, setCurrentPageSize] = useState('10');
 
-  const sizeChangerOptions: RAG-MedQASelectOptionType[] = useMemo(() => {
+  const sizeChangerOptions: RagMedQASelectOptionType[] = useMemo(() => {
     return [10, 20, 50, 100].map((x) => ({
       label: <span>{t('pagination.page', { page: x })}</span>,
       value: x.toString(),
@@ -175,7 +178,7 @@ export function RAG-MedQAPagination({
       </Pagination>
 
       {showSizeChanger && (
-        <RAG-MedQASelect
+        <RagMedQASelect
           options={sizeChangerOptions}
           value={currentPageSize}
           onChange={handlePageSizeChange}

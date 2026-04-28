@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import { IReference } from '@/interfaces/database/chat';
 import { cn } from '@/lib/utils';
 import { isEmpty } from 'lodash';
@@ -25,7 +25,7 @@ import { ISearchReturnProps } from './hooks';
 import './index.less';
 import MarkdownContent from './markdown-content';
 import MindMapDrawer from './mindmap-drawer';
-import { RAG-MedQALogo } from './RAG-MedQA-log';
+import { RagMedQALogo } from './ragflow-log';
 import RetrievalDocuments from './retrieval-documents';
 
 export default function SearchingView({
@@ -81,11 +81,11 @@ export default function SearchingView({
           'relative z-10 px-8 pt-8 flex  text-transparent justify-start items-start w-full h-full',
         )}
       >
-        <RAG-MedQALogo
+        <RagMedQALogo
           onClick={() => {
             setIsSearching?.(false);
           }}
-        ></RAG-MedQALogo>
+        ></RagMedQALogo>
         <div
           className={cn(
             ' rounded-lg text-primary text-xl sticky flex flex-col justify-center w-2/3 transform scale-100 ml-16 h-full',
@@ -265,12 +265,12 @@ export default function SearchingView({
 
           {total > 0 && (
             <div className="mt-8 px-8 pb-8 text-base">
-              <RAG-MedQAPagination
+              <RagMedQAPagination
                 current={pagination.current}
                 pageSize={pagination.pageSize}
                 total={total}
                 onChange={onChange}
-              ></RAG-MedQAPagination>
+              ></RagMedQAPagination>
             </div>
           )}
         </div>

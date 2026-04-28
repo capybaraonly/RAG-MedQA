@@ -1,0 +1,155 @@
+# 生产模式全栈部署
+# 所有服务（基础设施 + 后端 + 前端 nginx）全部跑在 Docker 中
+#
+# 前提：
+#   1. 已构建前端静态文件（cd web && npm run build）
+#   2. 已填写 docker/.env（API Key 等）
+#
+# 使用方式：
+#   cd docker
+#   docker compose up -d
+#   访问 http://localhost（或 http://localhost:${HTTP_PORT}）
+
+services:
+  # ── 基础设施 ──────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: ragmedqa-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-infini_rag_flow}
+      MYSQL_DATABASE: rag_flow
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_allowed_packet=1073741824
+      - --max_connections=900
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-infini_rag_flow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+    networks:
+      - ragmedqa
+
+  redis:
+    image: valkey/valkey:8
+    container_name: ragmedqa-redis
+    command: valkey-server --requirepass ${REDIS_PASSWORD:-infini_rag_flow}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "-a", "${REDIS_PASSWORD:-infini_rag_flow}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - ragmedqa
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    container_name: ragmedqa-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ES_PASSWORD:-infini_rag_flow}
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "curl -s -u elastic:${ES_PASSWORD:-infini_rag_flow} http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - ragmedqa
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-06-13T22-53-53Z
+    container_name: ragmedqa-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-rag_flow}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-infini_rag_flow}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - ragmedqa
+
+  # ── 后端服务 ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: ragmedqa-backend
+    environment:
+      - PYTHONPATH=/app
+      - DOC_ENGINE=${DOC_ENGINE:-elasticsearch}
+      - DB_TYPE=${DB_TYPE:-mysql}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - QWEN_API_KEY=${QWEN_API_KEY}
+    volumes:
+      # 挂载 Docker 专用 service_conf.yaml（使用容器内服务名而非 localhost）
+      - ./service_conf.yaml:/app/conf/service_conf.yaml:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    expose:
+      - "9380"
+      - "9381"
+    restart: unless-stopped
+    networks:
+      - ragmedqa
+
+  # ── 前端 + 反向代理 ───────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: ragmedqa-nginx
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # 前端构建产物：需先在宿主机执行 cd web && npm run build
+      - ../web/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - ragmedqa
+
+volumes:
+  mysql_data:
+  redis_data:
+  es_data:
+  minio_data:
+
+networks:
+  ragmedqa:
+    driver: bridge

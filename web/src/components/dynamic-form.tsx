@@ -20,7 +20,7 @@ import { ZodSchema, z } from 'zod';
 
 import EditTag from '@/components/edit-tag';
 import { SelectWithSearch } from '@/components/originui/select-with-search';
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -353,7 +353,7 @@ export const RenderField = ({
       return <div className="w-full">{field.render({})}</div>;
     }
     return (
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         {...field}
         labelClassName={labelClassName || field.labelClassName}
       >
@@ -371,13 +371,13 @@ export const RenderField = ({
             <div className="w-full">{field.render?.(finalFieldProps)}</div>
           );
         }}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
     );
   }
   switch (field.type) {
     case FormFieldType.Segmented:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -401,11 +401,11 @@ export const RenderField = ({
               />
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
     case FormFieldType.Textarea:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -428,12 +428,12 @@ export const RenderField = ({
               />
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
 
     case FormFieldType.Select:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -459,12 +459,12 @@ export const RenderField = ({
               />
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
 
     case FormFieldType.MultiSelect:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -493,12 +493,12 @@ export const RenderField = ({
               />
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
 
     case FormFieldType.Checkbox:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -529,11 +529,11 @@ export const RenderField = ({
               </div>
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
     case FormFieldType.Switch:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -555,12 +555,12 @@ export const RenderField = ({
               />
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
 
     case FormFieldType.Tag:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -584,12 +584,12 @@ export const RenderField = ({
               </div>
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
 
     default:
       return (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           {...field}
           labelClassName={labelClassName || field.labelClassName}
         >
@@ -614,7 +614,7 @@ export const RenderField = ({
               </div>
             );
           }}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       );
   }
 };

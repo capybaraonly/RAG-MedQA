@@ -1,7 +1,7 @@
 import HighLightMarkdown from '@/components/highlight-markdown';
 import message from '@/components/ui/message';
 import { Modal } from '@/components/ui/modal/modal';
-import { RAG-MedQASelect } from '@/components/ui/select';
+import { RagMedQASelect } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
   LanguageAbbreviation,
@@ -88,12 +88,12 @@ const EmbedAppModal = (props: IEmbedAppModalProps) => {
           <label className="block text-sm font-medium mb-2">
             {t('locale')}
           </label>
-          <RAG-MedQASelect
+          <RagMedQASelect
             placeholder="Select a locale"
             value={locale}
             onChange={(value) => setLocale(value)}
             options={languageOptions}
-          ></RAG-MedQASelect>
+          ></RagMedQASelect>
         </div>
         {/* Embed Code */}
         <div className="mb-6">

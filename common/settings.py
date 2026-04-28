@@ -12,7 +12,7 @@ from common.constants import SVR_QUEUE_NAME, Storage
 
 import rag.utils
 import rag.utils.es_conn
-from rag.utils.minio_conn import RAG-MedQAMinio
+from rag.utils.minio_conn import RAG_MedQAMinio
 from rag.utils.redis_conn import REDIS_CONN
 
 from rag.nlp import search
@@ -223,7 +223,7 @@ def init_settings():
 
     global MINIO, STORAGE_IMPL
     MINIO = decrypt_database_config(name="minio")
-    STORAGE_IMPL = RAG-MedQAMinio()
+    STORAGE_IMPL = RAG_MedQAMinio()
 
     global retriever, kg_retriever
     retriever = search.Dealer(docStoreConn)

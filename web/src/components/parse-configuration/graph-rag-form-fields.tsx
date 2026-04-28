@@ -19,7 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form';
-import { RAG-MedQASelect } from '../ui/select';
+import { RagMedQASelect } from '../ui/select';
 import { Switch } from '../ui/switch';
 
 const excludedTagParseMethods = [
@@ -172,11 +172,11 @@ const GraphRagItems = ({
                   </FormLabel>
                   <div className="w-3/4">
                     <FormControl>
-                      <RAG-MedQASelect
+                      <RagMedQASelect
                         {...field}
                         options={methodOptions}
                         triggerTestId="ds-settings-graph-method-select"
-                      ></RAG-MedQASelect>
+                      ></RagMedQASelect>
                     </FormControl>
                   </div>
                 </div>

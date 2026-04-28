@@ -1,4 +1,4 @@
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/utils/date';
 import { ReactNode } from 'react';
@@ -47,7 +47,7 @@ export function HomeCard({
       className="px-2.5 py-4 flex gap-2 items-start group h-full w-full hover:shadow-md"
     >
       <div>
-        <RAG-MedQAAvatar
+        <RagMedQAAvatar
           className="w-[32px] h-[32px]"
           avatar={data.avatar}
           name={data.name}

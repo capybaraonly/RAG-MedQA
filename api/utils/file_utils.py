@@ -29,6 +29,14 @@ if LOCK_KEY_pdfplumber not in sys.modules:
     sys.modules[LOCK_KEY_pdfplumber] = threading.Lock()
 
 
+def get_project_base_directory(*args):
+    """Return the project root directory, optionally joining subpaths."""
+    base = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir))
+    if args:
+        return os.path.join(base, *args)
+    return base
+
+
 def _normalize_filename_for_type(filename):
     """Extract a safe basename for type detection. Returns (normalized_str, True) or ("", False)."""
     if filename is None:

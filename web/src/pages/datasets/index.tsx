@@ -4,7 +4,7 @@ import { EmptyAppCard } from '@/components/empty/empty';
 import ListFilterBar from '@/components/list-filter-bar';
 import { RenameDialog } from '@/components/rename-dialog';
 import { Button } from '@/components/ui/button';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import { useFetchNextKnowledgeListByPage } from '@/hooks/use-knowledge-request';
 import { useQueryClient } from '@tanstack/react-query';
 import { pick } from 'lodash';
@@ -105,7 +105,7 @@ export default function Datasets() {
               </CardContainer>
 
               <footer className="mt-4 px-5 pb-5">
-                <RAG-MedQAPagination
+                <RagMedQAPagination
                   {...pick(pagination, 'current', 'pageSize')}
                   total={total_datasets}
                   onChange={handlePageChange}

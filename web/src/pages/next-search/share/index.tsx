@@ -1,4 +1,4 @@
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import i18n, { changeLanguageAsync } from '@/locales/config';
 import { useEffect, useState } from 'react';
 import {
@@ -31,11 +31,11 @@ export default function ShareSeachPage() {
     <>
       {visibleAvatar && (
         <div className="flex justify-start items-center gap-2 mx-6 mt-6 text-text-primary">
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             className="size-6"
             avatar={searchData.avatar}
             name={searchData.name}
-          ></RAG-MedQAAvatar>
+          ></RagMedQAAvatar>
           <div>{searchData.name}</div>
         </div>
       )}

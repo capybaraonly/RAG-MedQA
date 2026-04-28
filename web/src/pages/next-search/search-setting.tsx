@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RAG-MedQASelect } from '@/components/ui/select';
+import { RagMedQASelect } from '@/components/ui/select';
 import { Spin } from '@/components/ui/spin';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -324,7 +324,7 @@ const SearchSetting: React.FC<SearchSettingProps> = ({
                         {t('chat.model')}
                       </FormLabel>
                       <FormControl>
-                        <RAG-MedQASelect
+                        <RagMedQASelect
                           {...field}
                           options={rerankModelOptions}
                           triggerClassName={'bg-bg-input'}

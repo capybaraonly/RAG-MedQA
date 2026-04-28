@@ -1,7 +1,7 @@
 import { AvatarUpload } from '@/components/avatar-upload';
 import { SelectWithSearch } from '@/components/originui/select-with-search';
 import PageRankFormField from '@/components/page-rank-form-field';
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import {
   FormControl,
   FormField,
@@ -56,7 +56,7 @@ export function GeneralForm() {
         )}
       />
       <div className="items-center">
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           name="language"
           label={t('common.language')}
           horizontal={true}
@@ -66,7 +66,7 @@ export function GeneralForm() {
             triggerClassName="w-full"
             testId="ds-settings-basic-language-select"
           ></SelectWithSearch>
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       </div>
       <FormField
         control={form.control}

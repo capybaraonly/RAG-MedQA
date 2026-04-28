@@ -1,0 +1,51 @@
+# Docker 生产环境专用 service_conf.yaml
+# 使用 Docker 内部服务名（而非 localhost）
+# 由 docker-compose.yml 挂载覆盖 conf/service_conf.yaml
+
+RAG-MedQA:
+  host: 0.0.0.0
+  http_port: 9380
+admin:
+  host: 0.0.0.0
+  http_port: 9381
+mysql:
+  name: 'rag_flow'
+  user: 'root'
+  password: 'infini_rag_flow'
+  host: 'mysql'
+  port: 3306
+  max_connections: 900
+  stale_timeout: 300
+  max_allowed_packet: 1073741824
+minio:
+  user: 'rag_flow'
+  password: 'infini_rag_flow'
+  host: 'minio:9000'
+  bucket: ''
+  prefix_path: ''
+es:
+  hosts: 'http://elasticsearch:9200'
+  username: 'elastic'
+  password: 'infini_rag_flow'
+redis:
+  db: 1
+  username: ''
+  password: 'infini_rag_flow'
+  host: 'redis:6379'
+task_executor:
+  message_queue_type: 'redis'
+user_default_llm:
+  factory: 'DeepSeek'
+  api_key: 'sk-10dfed8c0eaf43c2b6e7cbc12d71daff'
+  base_url: 'https://api.deepseek.com/v1'
+  default_models:
+    chat_model:
+      name: 'deepseek-chat'
+      factory: 'DeepSeek'
+      api_key: 'sk-10dfed8c0eaf43c2b6e7cbc12d71daff'
+      base_url: 'https://api.deepseek.com/v1'
+    embedding_model:
+      name: 'bge-m3'
+      factory: 'xxxx'
+      api_key: 'xxx'
+      base_url: 'http://localhost:6380'

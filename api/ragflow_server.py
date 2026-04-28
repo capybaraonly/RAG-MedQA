@@ -20,14 +20,14 @@ from common.file_utils import get_project_base_directory
 from common import settings
 from api.db.db_models import init_database_tables as init_web_db
 from api.db.init_data import init_web_data, init_superuser
-from common.versions import get_RAG-MedQA_version
+from common.versions import get_RAG_MedQA_version
 from common.config_utils import show_configs
 from common.log_utils import init_root_logger
 from rag.utils.redis_conn import RedisDistributedLock
 
 stop_event = threading.Event()
 
-RAG-MedQA_DEBUGPY_LISTEN = int(os.environ.get('RAG-MedQA_DEBUGPY_LISTEN', "0"))
+RAG_MedQA_DEBUGPY_LISTEN = int(os.environ.get('RAG_MedQA_DEBUGPY_LISTEN', "0"))
 
 def update_progress():
     lock_value = str(uuid.uuid4())
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     """)
     logging.info(
-        f'RAG-MedQA version: {get_RAG-MedQA_version()}'
+        f'RAG-MedQA version: {get_RAG_MedQA_version()}'
     )
     logging.info(
         f'project base: {get_project_base_directory()}'
@@ -75,10 +75,10 @@ if __name__ == '__main__':
     settings.init_settings()
     settings.print_rag_settings()
 
-    if RAG-MedQA_DEBUGPY_LISTEN > 0:
-        logging.info(f"debugpy listen on {RAG-MedQA_DEBUGPY_LISTEN}")
+    if RAG_MedQA_DEBUGPY_LISTEN > 0:
+        logging.info(f"debugpy listen on {RAG_MedQA_DEBUGPY_LISTEN}")
         import debugpy
-        debugpy.listen(("0.0.0.0", RAG-MedQA_DEBUGPY_LISTEN))
+        debugpy.listen(("0.0.0.0", RAG_MedQA_DEBUGPY_LISTEN))
 
     # init db
     init_web_db()
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     if args.version:
-        print(get_RAG-MedQA_version())
+        print(get_RAG_MedQA_version())
         sys.exit(0)
 
     if args.init_superuser:

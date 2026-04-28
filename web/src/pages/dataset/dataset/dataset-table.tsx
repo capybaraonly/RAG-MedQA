@@ -17,7 +17,7 @@ import { ChunkMethodDialog } from '@/components/chunk-method-dialog';
 import { EmptyType } from '@/components/empty/constant';
 import Empty from '@/components/empty/empty';
 import { RenameDialog } from '@/components/rename-dialog';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import {
   Table,
   TableBody,
@@ -178,13 +178,13 @@ export function DatasetTable({
       </Table>
       <div className="flex items-center justify-end  py-4 absolute bottom-3 right-3">
         <div className="space-x-2">
-          <RAG-MedQAPagination
+          <RagMedQAPagination
             {...pick(pagination, 'current', 'pageSize')}
             total={pagination.total}
             onChange={(page, pageSize) => {
               setPagination({ page, pageSize });
             }}
-          ></RAG-MedQAPagination>
+          ></RagMedQAPagination>
         </div>
       </div>
       {changeParserVisible && (

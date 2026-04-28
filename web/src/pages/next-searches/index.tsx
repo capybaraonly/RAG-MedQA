@@ -4,7 +4,7 @@ import { EmptyAppCard } from '@/components/empty/empty';
 import ListFilterBar from '@/components/list-filter-bar';
 import { RenameDialog } from '@/components/rename-dialog';
 import { Button } from '@/components/ui/button';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import { useTranslate } from '@/hooks/common-hooks';
 import { pick } from 'lodash';
 import { Plus } from 'lucide-react';
@@ -103,7 +103,7 @@ export default function SearchList() {
               </CardContainer>
 
               <footer className="mt-4 px-5 pb-5">
-                <RAG-MedQAPagination
+                <RagMedQAPagination
                   {...pick(pagination, 'current', 'pageSize')}
                   total={list?.data.total}
                   onChange={handlePageChange}

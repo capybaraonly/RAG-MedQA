@@ -1,6 +1,6 @@
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { Input } from '@/components/ui/input';
-import { RAG-MedQASelect } from '@/components/ui/select';
+import { RagMedQASelect } from '@/components/ui/select';
 import { LLMFactory } from '@/constants/llm';
 import { buildOptions } from '@/utils/form';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -38,7 +38,7 @@ export function PaddleOCROptionsFormField({
         {t('knowledgeConfiguration.paddleocrOptions', 'PaddleOCR Options')}
       </div>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('paddleocr_api_url')}
         label={t('knowledgeConfiguration.paddleocrApiUrl', 'PaddleOCR API URL')}
         tooltip={t(
@@ -53,11 +53,14 @@ export function PaddleOCROptionsFormField({
             placeholder={t('knowledgeConfiguration.paddleocrApiUrlPlaceholder')}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('paddleocr_access_token')}
-        label={t('knowledgeConfiguration.paddleocrAccessToken', 'AI Studio Access Token')}
+        label={t(
+          'knowledgeConfiguration.paddleocrAccessToken',
+          'AI Studio Access Token',
+        )}
         tooltip={t(
           'knowledgeConfiguration.paddleocrAccessTokenTip',
           'Access token for PaddleOCR API (optional)',
@@ -67,14 +70,19 @@ export function PaddleOCROptionsFormField({
         {(field) => (
           <Input
             {...field}
-            placeholder={t('knowledgeConfiguration.paddleocrAccessTokenPlaceholder')}
+            placeholder={t(
+              'knowledgeConfiguration.paddleocrAccessTokenPlaceholder',
+            )}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('paddleocr_algorithm')}
-        label={t('knowledgeConfiguration.paddleocrAlgorithm', 'PaddleOCR Algorithm')}
+        label={t(
+          'knowledgeConfiguration.paddleocrAlgorithm',
+          'PaddleOCR Algorithm',
+        )}
         tooltip={t(
           'knowledgeConfiguration.paddleocrAlgorithmTip',
           'Algorithm to use for PaddleOCR parsing',
@@ -82,14 +90,14 @@ export function PaddleOCROptionsFormField({
         horizontal={true}
       >
         {(field) => (
-          <RAG-MedQASelect
+          <RagMedQASelect
             value={field.value || undefined}
             onChange={field.onChange}
             options={algorithmOptions}
             placeholder={t('common.selectPlaceholder', 'Select value')}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
     </div>
   );
 }

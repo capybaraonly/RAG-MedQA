@@ -4,7 +4,7 @@ import Icon from '@ant-design/icons';
 import { IconComponentProps } from '@ant-design/icons/lib/components/Icon';
 import { memo, useMemo } from 'react';
 import { IconFontFill } from './icon-font';
-import { RAG-MedQAAvatar } from './RAG-MedQA-avatar';
+import { RagMedQAAvatar } from './ragflow-avatar';
 import { useIsDarkTheme } from './theme-provider';
 
 // const importAll = (requireContext: __WebpackModuleApi.RequireContext) => {
@@ -158,7 +158,7 @@ export const HomeIcon = ({
       imgClass={imgClass}
     ></SvgIcon>
   ) : (
-    <RAG-MedQAAvatar avatar={'user'}></RAG-MedQAAvatar>
+    <RagMedQAAvatar avatar={'user'}></RagMedQAAvatar>
   );
 };
 

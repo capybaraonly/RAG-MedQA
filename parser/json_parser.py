@@ -11,7 +11,7 @@ from typing import Any
 from rag.nlp import find_codec
 
 
-class RAG-MedQAJsonParser:
+class RAG_MedQAJsonParser:
     def __init__(self, max_chunk_size: int = 2000, min_chunk_size: int | None = None):
         super().__init__()
         self.max_chunk_size = max_chunk_size * 2

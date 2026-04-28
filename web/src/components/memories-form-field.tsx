@@ -1,6 +1,6 @@
 import { useFetchAllMemoryList } from '@/hooks/use-memory-request';
 import { useTranslation } from 'react-i18next';
-import { RAG-MedQAFormItem } from './RAG-MedQA-form';
+import { RagMedQAFormItem } from './ragflow-form';
 import { MultiSelect } from './ui/multi-select';
 
 type MemoriesFormFieldProps = {
@@ -17,7 +17,7 @@ export function MemoriesFormField({ label }: MemoriesFormFieldProps) {
   }));
 
   return (
-    <RAG-MedQAFormItem name="memory_ids" label={label}>
+    <RagMedQAFormItem name="memory_ids" label={label}>
       {(field) => (
         <MultiSelect
           options={options || []}
@@ -28,6 +28,6 @@ export function MemoriesFormField({ label }: MemoriesFormFieldProps) {
           modalPopover
         />
       )}
-    </RAG-MedQAFormItem>
+    </RagMedQAFormItem>
   );
 }

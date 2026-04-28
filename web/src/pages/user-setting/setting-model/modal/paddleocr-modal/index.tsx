@@ -1,4 +1,4 @@
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,10 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RAG-MedQASelect, RAG-MedQASelectOptionType } from '@/components/ui/select';
+import {
+  RagMedQASelect,
+  RagMedQASelectOptionType,
+} from '@/components/ui/select';
 import { LLMFactory } from '@/constants/llm';
 import { VerifyResult } from '@/pages/user-setting/setting-model/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,7 +46,7 @@ export interface IModalProps<T> {
   loading?: boolean;
 }
 
-const algorithmOptions: RAG-MedQASelectOptionType[] = [
+const algorithmOptions: RagMedQASelectOptionType[] = [
   { label: 'PaddleOCR-VL', value: 'PaddleOCR-VL' },
 ];
 
@@ -84,7 +87,7 @@ const PaddleOCRModal = ({
             className="space-y-6"
             id="paddleocr-form"
           >
-            <RAG-MedQAFormItem
+            <RagMedQAFormItem
               name="llm_name"
               label={t('setting.modelName')}
               required
@@ -92,35 +95,35 @@ const PaddleOCRModal = ({
               <Input
                 placeholder={t('setting.paddleocr.modelNamePlaceholder')}
               />
-            </RAG-MedQAFormItem>
-            <RAG-MedQAFormItem
+            </RagMedQAFormItem>
+            <RagMedQAFormItem
               name="paddleocr_api_url"
               label={t('setting.paddleocr.apiUrl')}
               required
             >
               <Input placeholder={t('setting.paddleocr.apiUrlPlaceholder')} />
-            </RAG-MedQAFormItem>
-            <RAG-MedQAFormItem
+            </RagMedQAFormItem>
+            <RagMedQAFormItem
               name="paddleocr_access_token"
               label={t('setting.paddleocr.accessToken')}
             >
               <Input
                 placeholder={t('setting.paddleocr.accessTokenPlaceholder')}
               />
-            </RAG-MedQAFormItem>
-            <RAG-MedQAFormItem
+            </RagMedQAFormItem>
+            <RagMedQAFormItem
               name="paddleocr_algorithm"
               label={t('setting.paddleocr.algorithm')}
             >
               {(field) => (
-                <RAG-MedQASelect
+                <RagMedQASelect
                   value={field.value}
                   onChange={field.onChange}
                   options={algorithmOptions}
                   placeholder={t('setting.paddleocr.selectAlgorithm')}
                 />
               )}
-            </RAG-MedQAFormItem>
+            </RagMedQAFormItem>
             {onVerify && (
               <VerifyButton
                 onVerify={onVerify as (postBody: any) => Promise<VerifyResult>}

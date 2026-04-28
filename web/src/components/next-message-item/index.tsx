@@ -31,7 +31,7 @@ import {
   extractPDFDownloadInfo,
   removePDFDownloadInfo,
 } from '../pdf-download-button';
-import { RAG-MedQAAvatar } from '../RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '../ragflow-avatar';
 import SvgIcon from '../svg-icon';
 import { useTheme } from '../theme-provider';
 import { Button } from '../ui/button';
@@ -201,9 +201,9 @@ function MessageItem({
         >
           {visibleAvatar &&
             (item.role === MessageType.User ? (
-              <RAG-MedQAAvatar avatar={avatar ?? '/logo.svg'} />
+              <RagMedQAAvatar avatar={avatar ?? '/logo.svg'} />
             ) : avatarDialog || agentName ? (
-              <RAG-MedQAAvatar
+              <RagMedQAAvatar
                 avatar={avatarDialog as string}
                 name={agentName}
                 isPerson

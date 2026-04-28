@@ -4,7 +4,7 @@ import { EmptyAppCard } from '@/components/empty/empty';
 import ListFilterBar from '@/components/list-filter-bar';
 import { RenameDialog } from '@/components/rename-dialog';
 import { Button } from '@/components/ui/button';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import { useFetchChatList } from '@/hooks/use-chat-request';
 import { pick } from 'lodash';
 import { Plus } from 'lucide-react';
@@ -79,7 +79,7 @@ export default function ChatList() {
               </CardContainer>
 
               <footer className="mt-4 px-5 pb-5">
-                <RAG-MedQAPagination
+                <RagMedQAPagination
                   {...pick(pagination, 'current', 'pageSize')}
                   total={pagination.total}
                   onChange={handlePageChange}

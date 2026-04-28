@@ -1,6 +1,6 @@
 'use client';
 
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { LucidePencil } from 'lucide-react';
@@ -44,7 +44,7 @@ export function EditableField({
   const finalPlaceholder = placeholder ?? t('common.namePlaceholder');
 
   return (
-    <RAG-MedQAFormItem
+    <RagMedQAFormItem
       name={name}
       className={cn('flex items-center gap-1.5', className)}
       required={required}
@@ -94,7 +94,7 @@ export function EditableField({
           </div>
         )
       }
-    </RAG-MedQAFormItem>
+    </RagMedQAFormItem>
   );
 }
 

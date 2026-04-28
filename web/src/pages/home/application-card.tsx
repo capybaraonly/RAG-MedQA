@@ -1,4 +1,4 @@
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/utils/date';
 import { t } from 'i18next';
@@ -23,7 +23,7 @@ export function ApplicationCard({
     <Card className="w-[264px]" onClick={onClick} as="article">
       <CardContent className="p-2.5 group flex justify-between w-full">
         <div className="flex items-center gap-2.5 w-full">
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             className="size-14 rounded-lg"
             avatar={app.avatar}
             name={app.title || 'CN'}

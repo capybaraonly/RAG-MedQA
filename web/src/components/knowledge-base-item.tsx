@@ -6,8 +6,8 @@ import { toLower } from 'lodash';
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { RAG-MedQAAvatar } from './RAG-MedQA-avatar';
-import { RAG-MedQAFormItem } from './RAG-MedQA-form';
+import { RagMedQAAvatar } from './ragflow-avatar';
+import { RagMedQAFormItem } from './ragflow-form';
 import { MultiSelect } from './ui/multi-select';
 
 function buildQueryVariableOptionsByShowVariable(showVariable?: boolean) {
@@ -39,7 +39,7 @@ export function useDisableDifferenceEmbeddingDataset(name: string) {
         return {
           label: item.name,
           icon: () => (
-            <RAG-MedQAAvatar
+            <RagMedQAAvatar
               className="size-4"
               avatar={item.avatar}
               name={item.name}
@@ -96,7 +96,7 @@ export function KnowledgeBaseFormField({
               .map((x) => ({
                 ...x,
                 icon: () => (
-                  <RAG-MedQAAvatar
+                  <RagMedQAAvatar
                     className="size-4 mr-2"
                     avatar={x.label}
                     name={x.label}
@@ -112,7 +112,7 @@ export function KnowledgeBaseFormField({
   }, [knowledgeOptions, nextOptions, showVariable, t]);
 
   return (
-    <RAG-MedQAFormItem
+    <RagMedQAFormItem
       name={name}
       tooltip={t('chat.knowledgeBasesTip')}
       required={required}
@@ -133,6 +133,6 @@ export function KnowledgeBaseFormField({
           {...field}
         />
       )}
-    </RAG-MedQAFormItem>
+    </RagMedQAFormItem>
   );
 }

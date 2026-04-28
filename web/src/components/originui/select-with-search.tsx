@@ -28,14 +28,14 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { t } from 'i18next';
-import { RAG-MedQASelectOptionType } from '../ui/select';
+import { RagMedQASelectOptionType } from '../ui/select';
 import { Separator } from '../ui/separator';
 
 export type SelectWithSearchFlagOptionType = {
   label: ReactNode;
   value?: string;
   disabled?: boolean;
-  options?: RAG-MedQASelectOptionType[];
+  options?: RagMedQASelectOptionType[];
 };
 
 export type SelectWithSearchFlagProps = {

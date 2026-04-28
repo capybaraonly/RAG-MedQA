@@ -2,7 +2,7 @@ import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import EmbedDialog from '@/components/embed-dialog';
 import { useShowEmbedModal } from '@/components/embed-dialog/use-show-embed-dialog';
 import { MoreButton } from '@/components/more-button';
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchInput } from '@/components/ui/input';
@@ -156,7 +156,7 @@ export function Sessions({ handleConversationCardClick }: SessionProps) {
           onClick={switchVisible}
           data-testid="chat-detail-sessions-open"
         >
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             avatar={data.icon}
             name={data.name}
             className="size-8 cursor-pointer"
@@ -174,7 +174,7 @@ export function Sessions({ handleConversationCardClick }: SessionProps) {
     >
       <header className="flex items-center text-base justify-between gap-4">
         <div className="flex gap-3 items-center min-w-0">
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             avatar={data.icon}
             name={data.name}
             className="size-8"

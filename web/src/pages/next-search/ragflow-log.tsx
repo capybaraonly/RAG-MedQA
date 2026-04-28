@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useFetchSearchDetail } from '../next-searches/hooks';
 import EmbedAppModal from './embed-app-modal';
 
-export function RAG-MedQALogo({
+export function RagMedQALogo({
   onClick,
 }: {
   onClick?: React.MouseEventHandler<HTMLHeadingElement>;

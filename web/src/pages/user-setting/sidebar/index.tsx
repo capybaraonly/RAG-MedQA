@@ -1,5 +1,5 @@
 import { IconFontFill } from '@/components/icon-font';
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import ThemeSwitch from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
 import { Domain } from '@/constants/common';
@@ -84,7 +84,7 @@ export function SideBar() {
     <aside className="w-[303px] bg-bg-base flex flex-col">
       <header>
         <h1 className="px-6 flex gap-2.5 items-center font-normal">
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             avatar={userInfo?.avatar}
             name={userInfo?.nickname}
             isPerson

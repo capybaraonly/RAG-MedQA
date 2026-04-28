@@ -1,4 +1,4 @@
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { ButtonLoading } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RAG-MedQASelect } from '@/components/ui/select';
+import { RagMedQASelect } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { LLMFactory } from '@/constants/llm';
 import { IModalProps } from '@/interfaces/common';
@@ -102,32 +102,32 @@ const MinerUModal = ({
             className="space-y-6"
             id="mineru-form"
           >
-            <RAG-MedQAFormItem
+            <RagMedQAFormItem
               name="llm_name"
               label={t('setting.modelName')}
               required
             >
               <Input placeholder="mineru-from-env-1" />
-            </RAG-MedQAFormItem>
-            <RAG-MedQAFormItem
+            </RagMedQAFormItem>
+            <RagMedQAFormItem
               name="mineru_apiserver"
               label={t('setting.mineru.apiserver')}
               required
             >
               <Input placeholder="http://host.docker.internal:9987" />
-            </RAG-MedQAFormItem>
-            <RAG-MedQAFormItem
+            </RagMedQAFormItem>
+            <RagMedQAFormItem
               name="mineru_output_dir"
               label={t('setting.mineru.outputDir')}
             >
               <Input placeholder="/tmp/mineru" />
-            </RAG-MedQAFormItem>
-            <RAG-MedQAFormItem
+            </RagMedQAFormItem>
+            <RagMedQAFormItem
               name="mineru_backend"
               label={t('setting.mineru.backend')}
             >
               {(field) => (
-                <RAG-MedQASelect
+                <RagMedQASelect
                   value={field.value}
                   onChange={(value) => {
                     field.onChange(value);
@@ -139,16 +139,16 @@ const MinerUModal = ({
                   placeholder={t('setting.mineru.selectBackend')}
                 />
               )}
-            </RAG-MedQAFormItem>
+            </RagMedQAFormItem>
             {backend === 'vlm-http-client' && (
-              <RAG-MedQAFormItem
+              <RagMedQAFormItem
                 name="mineru_server_url"
                 label={t('setting.mineru.serverUrl')}
               >
                 <Input placeholder="http://your-vllm-server:30000" />
-              </RAG-MedQAFormItem>
+              </RagMedQAFormItem>
             )}
-            <RAG-MedQAFormItem
+            <RagMedQAFormItem
               name="mineru_delete_output"
               label={t('setting.mineru.deleteOutput')}
               labelClassName="!mb-0"
@@ -159,7 +159,7 @@ const MinerUModal = ({
                   onCheckedChange={field.onChange}
                 />
               )}
-            </RAG-MedQAFormItem>
+            </RagMedQAFormItem>
             {onVerify && (
               <VerifyButton
                 onVerify={onVerify as (postBody: any) => Promise<VerifyResult>}

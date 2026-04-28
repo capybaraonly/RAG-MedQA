@@ -1,0 +1,107 @@
+# 开发模式基础服务
+# 只启动基础设施（MySQL / Redis / Elasticsearch / MinIO）
+# 后端和前端在宿主机上本地运行
+#
+# 使用方式：
+#   cd docker && docker compose -f docker-compose-base.yml up -d
+#
+# 端口与 conf/service_conf.yaml 中的 localhost 地址完全对应：
+#   MySQL       → localhost:3306
+#   Redis       → localhost:6379
+#   Elasticsearch → localhost:1200（容器内 9200 映射到宿主 1200）
+#   MinIO API   → localhost:9000
+#   MinIO 控制台 → localhost:9001
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ragmedqa-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-infini_rag_flow}
+      MYSQL_DATABASE: rag_flow
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_allowed_packet=1073741824
+      - --max_connections=900
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-infini_rag_flow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: valkey/valkey:8
+    container_name: ragmedqa-redis
+    ports:
+      - "6379:6379"
+    command: valkey-server --requirepass ${REDIS_PASSWORD:-infini_rag_flow}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "-a", "${REDIS_PASSWORD:-infini_rag_flow}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    container_name: ragmedqa-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ES_PASSWORD:-infini_rag_flow}
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      # 映射到 1200，与 service_conf.yaml 中 hosts: 'http://localhost:1200' 匹配
+      - "1200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "curl -s -u elastic:${ES_PASSWORD:-infini_rag_flow} http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-06-13T22-53-53Z
+    container_name: ragmedqa-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-rag_flow}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-infini_rag_flow}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  es_data:
+  minio_data:

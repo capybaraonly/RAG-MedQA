@@ -1,5 +1,5 @@
 
-from common.versions import get_RAG-MedQA_version
+from common.versions import get_RAG_MedQA_version
 from .reload_config_base import ReloadConfigBase
 
 
@@ -21,7 +21,7 @@ class RuntimeConfig(ReloadConfigBase):
 
     @classmethod
     def init_env(cls):
-        cls.ENV.update({"version": get_RAG-MedQA_version()})
+        cls.ENV.update({"version": get_RAG_MedQA_version()})
 
     @classmethod
     def load_config_manager(cls):

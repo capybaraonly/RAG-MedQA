@@ -1,7 +1,7 @@
 import { useFetchAppConf } from '@/hooks/logic-hooks';
 import { RefreshCcw } from 'lucide-react';
 import { PropsWithChildren } from 'react';
-import { RAG-MedQAAvatar } from './RAG-MedQA-avatar';
+import { RagMedQAAvatar } from './ragflow-avatar';
 import { Button } from './ui/button';
 
 type EmbedContainerProps = {
@@ -27,7 +27,7 @@ export function EmbedContainer({
       <div className="w-full h-full md:w-[80vw] md:h-auto border-0 md:border rounded-none md:rounded-lg">
         <div className="flex justify-between items-center border-b p-3 relative">
           <div className="flex gap-2 items-center absolute left-1/2 -translate-x-1/2 md:static md:left-auto md:translate-x-0">
-            <RAG-MedQAAvatar
+            <RagMedQAAvatar
               avatar={avatar}
               name={title}
               isPerson

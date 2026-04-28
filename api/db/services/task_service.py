@@ -16,7 +16,7 @@ from api.db.services.document_service import DocumentService
 from common.misc_utils import get_uuid
 from common.time_utils import current_timestamp
 from common.constants import StatusEnum, TaskStatus
-from deepdoc.parser.excel_parser import RAG-MedQAExcelParser
+from deepdoc.parser.excel_parser import RAG_MedQAExcelParser
 from rag.utils.redis_conn import REDIS_CONN
 from common import settings
 from rag.nlp import search
@@ -395,7 +395,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
 
     elif doc["parser_id"] == "table":
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
-        rn = RAG-MedQAExcelParser.row_number(doc["name"], file_bin)
+        rn = RAG_MedQAExcelParser.row_number(doc["name"], file_bin)
         for i in range(0, rn, 3000):
             task = new_task()
             task["from_page"] = i

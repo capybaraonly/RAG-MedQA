@@ -49,7 +49,7 @@ export const FormTooltip = ({ tooltip }: { tooltip: React.ReactNode }) => {
   );
 };
 
-export function RAG-MedQATooltip({
+export function RagMedQATooltip({
   children,
   tooltip,
 }: React.PropsWithChildren & { tooltip: React.ReactNode }) {

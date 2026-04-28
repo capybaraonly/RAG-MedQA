@@ -1,5 +1,5 @@
 import { SelectWithSearch } from '@/components/originui/select-with-search';
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { ButtonLoading } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -199,7 +199,7 @@ const BedrockModal = ({
           className="space-y-6"
           id="bedrock-form"
         >
-          <RAG-MedQAFormItem name="model_type" label={t('modelType')} required>
+          <RagMedQAFormItem name="model_type" label={t('modelType')} required>
             {(field) => (
               <SelectWithSearch
                 value={field.value}
@@ -208,14 +208,14 @@ const BedrockModal = ({
                 placeholder={t('modelTypeMessage')}
               />
             )}
-          </RAG-MedQAFormItem>
+          </RagMedQAFormItem>
 
-          <RAG-MedQAFormItem name="llm_name" label={t('modelName')} required>
+          <RagMedQAFormItem name="llm_name" label={t('modelName')} required>
             <Input placeholder={t('bedrockModelNameMessage')} />
-          </RAG-MedQAFormItem>
+          </RagMedQAFormItem>
 
           <div className="mb-4">
-            <RAG-MedQAFormItem name="auth_mode">
+            <RagMedQAFormItem name="auth_mode">
               {(field) => (
                 <Segmented
                   value={field.value}
@@ -240,36 +240,36 @@ const BedrockModal = ({
                   ]}
                 />
               )}
-            </RAG-MedQAFormItem>
+            </RagMedQAFormItem>
           </div>
 
           {authMode === 'access_key_secret' && (
             <>
-              <RAG-MedQAFormItem
+              <RagMedQAFormItem
                 name="bedrock_ak"
                 label={t('awsAccessKeyId')}
                 required
               >
                 <Input placeholder={t('bedrockAKMessage')} />
-              </RAG-MedQAFormItem>
-              <RAG-MedQAFormItem
+              </RagMedQAFormItem>
+              <RagMedQAFormItem
                 name="bedrock_sk"
                 label={t('awsSecretAccessKey')}
                 required
               >
                 <Input placeholder={t('bedrockSKMessage')} />
-              </RAG-MedQAFormItem>
+              </RagMedQAFormItem>
             </>
           )}
 
           {authMode === 'iam_role' && (
-            <RAG-MedQAFormItem
+            <RagMedQAFormItem
               name="aws_role_arn"
               label={t('awsRoleArn')}
               required
             >
               <Input placeholder={t('awsRoleArnMessage')} />
-            </RAG-MedQAFormItem>
+            </RagMedQAFormItem>
           )}
 
           {authMode === 'assume_role' && (
@@ -278,7 +278,7 @@ const BedrockModal = ({
             </div>
           )}
 
-          <RAG-MedQAFormItem
+          <RagMedQAFormItem
             name="bedrock_region"
             label={t('bedrockRegion')}
             required
@@ -292,9 +292,9 @@ const BedrockModal = ({
                 allowClear
               />
             )}
-          </RAG-MedQAFormItem>
+          </RagMedQAFormItem>
 
-          <RAG-MedQAFormItem name="max_tokens" label={t('maxTokens')} required>
+          <RagMedQAFormItem name="max_tokens" label={t('maxTokens')} required>
             {(field) => (
               <Input
                 type="number"
@@ -303,7 +303,7 @@ const BedrockModal = ({
                 onChange={(e) => field.onChange(Number(e.target.value))}
               />
             )}
-          </RAG-MedQAFormItem>
+          </RagMedQAFormItem>
           {onVerify && <VerifyButton onVerify={handleVerify} />}
         </form>
       </Form>

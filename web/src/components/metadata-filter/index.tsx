@@ -3,7 +3,7 @@ import { useTranslate } from '@/hooks/common-hooks';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { SelectWithSearch } from '../originui/select-with-search';
-import { RAG-MedQAFormItem } from '../RAG-MedQA-form';
+import { RagMedQAFormItem } from '../ragflow-form';
 import { MetadataFilterConditions } from './metadata-filter-conditions';
 import { MetadataSemiAutoFields } from './metadata-semi-auto-fields';
 
@@ -70,7 +70,7 @@ export function MetadataFilter({
   return (
     <>
       {hasKnowledge && (
-        <RAG-MedQAFormItem
+        <RagMedQAFormItem
           label={t('metadata')}
           name={methodName}
           tooltip={t('metadataTip')}
@@ -79,7 +79,7 @@ export function MetadataFilter({
             options={MetadataOptions}
             triggerClassName="!bg-bg-input"
           />
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       )}
       {hasKnowledge && metadata === DatasetMetadata.Manual && (
         <MetadataFilterConditions

@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { FileUploader } from '../file-uploader';
-import { RAG-MedQAFormItem } from '../RAG-MedQA-form';
+import { RagMedQAFormItem } from '../ragflow-form';
 import { Form } from '../ui/form';
 import { Switch } from '../ui/switch';
 
@@ -67,7 +67,7 @@ function UploadForm({ submit, showParseOnCreation }: UploadFormProps) {
         className="space-y-4"
       >
         {showParseOnCreation && (
-          <RAG-MedQAFormItem
+          <RagMedQAFormItem
             name="parseOnCreation"
             label={t('fileManager.parseOnCreation')}
           >
@@ -78,9 +78,9 @@ function UploadForm({ submit, showParseOnCreation }: UploadFormProps) {
                 checked={field.value}
               />
             )}
-          </RAG-MedQAFormItem>
+          </RagMedQAFormItem>
         )}
-        <RAG-MedQAFormItem name="fileList" label={''}>
+        <RagMedQAFormItem name="fileList" label={''}>
           {(field) => (
             <FileUploader
               value={field.value}
@@ -89,7 +89,7 @@ function UploadForm({ submit, showParseOnCreation }: UploadFormProps) {
               data-testid="dataset-upload-dropzone"
             />
           )}
-        </RAG-MedQAFormItem>
+        </RagMedQAFormItem>
       </form>
     </Form>
   );

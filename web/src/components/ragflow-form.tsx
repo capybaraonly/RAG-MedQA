@@ -13,7 +13,7 @@ import {
   useFormContext,
 } from 'react-hook-form';
 
-type RAG-MedQAFormItemProps = {
+type RagMedQAFormItemProps = {
   name: string;
   label?: ReactNode;
   tooltip?: ReactNode;
@@ -24,7 +24,7 @@ type RAG-MedQAFormItemProps = {
   className?: string;
 } & Pick<UseControllerProps<any>, 'rules'>;
 
-export function RAG-MedQAFormItem({
+export function RagMedQAFormItem({
   name,
   label,
   tooltip,
@@ -34,7 +34,7 @@ export function RAG-MedQAFormItem({
   labelClassName,
   className,
   rules,
-}: RAG-MedQAFormItemProps) {
+}: RagMedQAFormItemProps) {
   const form = useFormContext();
   return (
     <FormField

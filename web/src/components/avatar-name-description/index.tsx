@@ -1,7 +1,7 @@
 'use client';
 
 import { AvatarUpload } from '@/components/avatar-upload';
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { cn } from '@/lib/utils';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -48,9 +48,9 @@ export function AvatarNameDescription({
 
   return (
     <div className={cn('flex gap-3', className)}>
-      <RAG-MedQAFormItem name={avatarField}>
+      <RagMedQAFormItem name={avatarField}>
         <AvatarUpload tips={''} />
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
 
       {/* Name & Description Section */}
       <div className="flex-1 min-w-0 pt-1 space-y-1">

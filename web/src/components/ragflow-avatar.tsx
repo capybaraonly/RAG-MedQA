@@ -41,7 +41,7 @@ const getColorForName = (name: string): { from: string; to: string } => {
   return PREDEFINED_COLORS[index];
 };
 
-export const RAG-MedQAAvatar = memo(
+export const RagMedQAAvatar = memo(
   forwardRef<
     React.ElementRef<typeof AvatarPrimitive.Root>,
     React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
@@ -96,4 +96,4 @@ export const RAG-MedQAAvatar = memo(
   }),
 );
 
-RAG-MedQAAvatar.displayName = 'RAG-MedQAAvatar';
+RagMedQAAvatar.displayName = 'RagMedQAAvatar';

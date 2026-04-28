@@ -37,7 +37,7 @@ import {
   oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { z } from 'zod';
-import { RAG-MedQAFormItem } from '../RAG-MedQA-form';
+import { RagMedQAFormItem } from '../ragflow-form';
 import { SwitchFormField } from '../switch-fom-field';
 import { useIsDarkTheme } from '../theme-provider';
 import { Input } from '../ui/input';
@@ -271,13 +271,13 @@ window.addEventListener('message',e=>{
                   label={t('chat.enableStreaming')}
                 ></SwitchFormField>
               )}
-              <RAG-MedQAFormItem name="locale" label={t('chat.locale')}>
+              <RagMedQAFormItem name="locale" label={t('chat.locale')}>
                 <SelectWithSearch options={languageOptions}></SelectWithSearch>
-              </RAG-MedQAFormItem>
+              </RagMedQAFormItem>
               {isAgent && (
-                <RAG-MedQAFormItem name="userId" label={t('flow.userId')}>
+                <RagMedQAFormItem name="userId" label={t('flow.userId')}>
                   <Input></Input>
-                </RAG-MedQAFormItem>
+                </RagMedQAFormItem>
               )}
             </form>
           </Form>

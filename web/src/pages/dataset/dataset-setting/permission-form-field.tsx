@@ -1,5 +1,5 @@
 import { SelectWithSearch } from '@/components/originui/select-with-search';
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { PermissionRole } from '@/constants/permission';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,7 @@ export function PermissionFormField() {
   }, [t]);
 
   return (
-    <RAG-MedQAFormItem
+    <RagMedQAFormItem
       name="permission"
       label={t('knowledgeConfiguration.permissions')}
       tooltip={t('knowledgeConfiguration.permissionsTip')}
@@ -25,6 +25,6 @@ export function PermissionFormField() {
         triggerClassName="w-full"
         testId="ds-settings-basic-permissions-select"
       ></SelectWithSearch>
-    </RAG-MedQAFormItem>
+    </RagMedQAFormItem>
   );
 }

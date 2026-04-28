@@ -26,7 +26,7 @@ def _build_minio_http_client():
 
 
 @singleton
-class RAG-MedQAMinio:
+class RAG_MedQAMinio:
     def __init__(self):
         self.conn = None
         # Use `or None` to convert empty strings to None, ensuring single-bucket

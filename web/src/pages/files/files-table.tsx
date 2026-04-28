@@ -19,7 +19,7 @@ import { RenameDialog } from '@/components/rename-dialog';
 import { TableEmpty, TableSkeleton } from '@/components/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import {
   Table,
   TableBody,
@@ -334,7 +334,7 @@ export function FilesTable({
       </div>
 
       <footer className="flex items-center justify-end pb-5 mt-4">
-        <RAG-MedQAPagination
+        <RagMedQAPagination
           {...pick(pagination, 'current', 'pageSize')}
           total={total}
           onChange={(page, pageSize) => {

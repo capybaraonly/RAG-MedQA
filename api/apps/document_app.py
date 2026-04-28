@@ -47,7 +47,7 @@ from common.constants import SANDBOX_ARTIFACT_BUCKET, VALID_TASK_STATUS, ParserT
 from common.file_utils import get_project_base_directory
 from common.metadata_utils import convert_conditions, meta_filter, turn2jsonschema
 from common.misc_utils import get_uuid, thread_pool_exec
-from deepdoc.parser.html_parser import RAG-MedQAHtmlParser
+from deepdoc.parser.html_parser import RAG_MedQAHtmlParser
 from rag.nlp import search
 
 
@@ -841,7 +841,7 @@ async def parse():
         driver.get(url)
         res_headers = [r.response.headers for r in driver.requests if r and r.response]
         if len(res_headers) > 1:
-            sections = RAG-MedQAHtmlParser().parser_txt(driver.page_source)
+            sections = RAG_MedQAHtmlParser().parser_txt(driver.page_source)
             driver.quit()
             return get_json_result(data="\n".join(sections))
 

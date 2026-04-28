@@ -1,6 +1,6 @@
 'use client';
 
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { LucidePencil } from 'lucide-react';
@@ -79,7 +79,7 @@ export function EditableTextarea({
 
   return (
     <div className={cn('flex items-center gap-1.5 group', className)}>
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={name}
         className={cn(isEditing ? 'flex-1 w-full' : 'w-auto min-w-0')}
       >
@@ -126,7 +126,7 @@ export function EditableTextarea({
             </p>
           )
         }
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
       {!isEditing && showEditIcon && (
         <button
           type="button"

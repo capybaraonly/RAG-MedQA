@@ -1,4 +1,4 @@
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { SliderInputFormField } from '@/components/slider-input-form-field';
 import {
   FormControl,
@@ -26,11 +26,11 @@ export const TagSetItem = () => {
       label: x.name,
       value: x.id,
       icon: () => (
-        <RAG-MedQAAvatar
+        <RagMedQAAvatar
           name={x.name}
           avatar={x.avatar}
           className="size-4"
-        ></RAG-MedQAAvatar>
+        ></RagMedQAAvatar>
       ),
     }));
 

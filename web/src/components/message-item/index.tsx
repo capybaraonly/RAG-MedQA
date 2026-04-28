@@ -19,7 +19,7 @@ import {
   extractPDFDownloadInfo,
   removePDFDownloadInfo,
 } from '../pdf-download-button';
-import { RAG-MedQAAvatar } from '../RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '../ragflow-avatar';
 import SvgIcon from '../svg-icon';
 import { useTheme } from '../theme-provider';
 import { AssistantGroupButton, UserGroupButton } from './group-button';
@@ -105,13 +105,13 @@ const MessageItem = ({
         >
           {visibleAvatar &&
             (item.role === MessageType.User ? (
-              <RAG-MedQAAvatar
+              <RagMedQAAvatar
                 className="size-10"
                 avatar={avatar ?? '/logo.svg'}
                 isPerson
               />
             ) : avatarDialog ? (
-              <RAG-MedQAAvatar
+              <RagMedQAAvatar
                 className="size-10"
                 avatar={avatarDialog}
                 isPerson

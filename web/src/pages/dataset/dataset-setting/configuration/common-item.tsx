@@ -40,7 +40,7 @@ import {
   util,
 } from '../../components/metedata/hooks/use-manage-modal';
 
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import {
   IBuiltInMetadataItem,
   IMetaDataReturnJSONSettings,
@@ -417,7 +417,7 @@ export function AutoMetadata({
       builtInMetadata,
       secondTitle: knowledgeBase ? (
         <div className="w-full flex items-center gap-1 text-sm text-text-secondary">
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             avatar={knowledgeBase.avatar}
             name={knowledgeBase.name}
             className="size-8"

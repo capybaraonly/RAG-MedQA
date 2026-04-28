@@ -2,7 +2,7 @@ import { LlmModelType } from '@/constants/knowledge';
 import { useComposeLlmOptionsByModelTypes } from '@/hooks/use-llm-request';
 import { useTranslation } from 'react-i18next';
 import { SelectWithSearch } from '../originui/select-with-search';
-import { RAG-MedQAFormItem } from '../RAG-MedQA-form';
+import { RagMedQAFormItem } from '../ragflow-form';
 
 export type LLMFormFieldProps = {
   options?: any[];
@@ -33,13 +33,13 @@ export function LLMFormField({
   const { modelOptions } = useModelOptions();
 
   return (
-    <RAG-MedQAFormItem name={name || 'llm_id'} label={t('chat.model')}>
+    <RagMedQAFormItem name={name || 'llm_id'} label={t('chat.model')}>
       <SelectWithSearch
         options={options || modelOptions}
         testId={testId}
         optionTestIdPrefix={optionTestIdPrefix}
         {...config}
       ></SelectWithSearch>
-    </RAG-MedQAFormItem>
+    </RagMedQAFormItem>
   );
 }

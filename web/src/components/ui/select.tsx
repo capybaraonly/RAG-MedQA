@@ -189,21 +189,21 @@ export {
   SelectValue,
 };
 
-export type RAG-MedQASelectOptionType = {
+export type RagMedQASelectOptionType = {
   label: React.ReactNode;
   value: string;
   disabled?: boolean;
   icon?: React.ReactNode;
 };
 
-export type RAG-MedQASelectGroupOptionType = {
+export type RagMedQASelectGroupOptionType = {
   label: React.ReactNode;
-  options: RAG-MedQASelectOptionType[];
+  options: RagMedQASelectOptionType[];
 };
 
-export type RAG-MedQASelectProps = Partial<ControllerRenderProps> & {
+export type RagMedQASelectProps = Partial<ControllerRenderProps> & {
   FormControlComponent?: typeof FormControl;
-  options?: (RAG-MedQASelectOptionType | RAG-MedQASelectGroupOptionType)[];
+  options?: (RagMedQASelectOptionType | RagMedQASelectGroupOptionType)[];
   allowClear?: boolean;
   placeholder?: React.ReactNode;
   contentProps?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>;
@@ -229,9 +229,9 @@ export type RAG-MedQASelectProps = Partial<ControllerRenderProps> & {
  * }
  * @return {*}
  */
-export const RAG-MedQASelect = forwardRef<
+export const RagMedQASelect = forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  RAG-MedQASelectProps
+  RagMedQASelectProps
 >(function (
   {
     value: initialValue,
@@ -283,14 +283,14 @@ export const RAG-MedQASelect = forwardRef<
   const label = React.useMemo(() => {
     let nextOptions = options;
     if (options.some((x) => !('value' in x))) {
-      nextOptions = (options as RAG-MedQASelectGroupOptionType[]).reduce<
-        RAG-MedQASelectOptionType[]
+      nextOptions = (options as RagMedQASelectGroupOptionType[]).reduce<
+        RagMedQASelectOptionType[]
       >((pre, cur) => {
         return pre.concat(cur?.options ?? []);
       }, []);
     }
 
-    const option = (nextOptions as RAG-MedQASelectOptionType[]).find(
+    const option = (nextOptions as RagMedQASelectOptionType[]).find(
       (x) => x.value === value,
     );
 
@@ -321,7 +321,7 @@ export const RAG-MedQASelect = forwardRef<
           if ('value' in o) {
             return (
               <SelectItem
-                value={o.value as RAG-MedQASelectOptionType['value']}
+                value={o.value as RagMedQASelectOptionType['value']}
                 key={o.value}
                 disabled={o.disabled}
                 data-testid={
@@ -363,4 +363,4 @@ export const RAG-MedQASelect = forwardRef<
   );
 });
 
-RAG-MedQASelect.displayName = 'RAG-MedQASelect';
+RagMedQASelect.displayName = 'RagMedQASelect';

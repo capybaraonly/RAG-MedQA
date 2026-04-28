@@ -13,7 +13,7 @@ from openpyxl import load_workbook
 from deepdoc.parser.utils import get_text
 from rag.nlp import is_english, random_choices, qbullets_category, add_positions, has_qbullet, docx_question_level
 from rag.nlp import rag_tokenizer, tokenize_table, concat_img
-from deepdoc.parser import ExcelParser
+from deepdoc.parser import ExcelParser, DocxParser
 from docx import Document
 from markdown import markdown
 

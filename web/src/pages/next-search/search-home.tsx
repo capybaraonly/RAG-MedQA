@@ -6,7 +6,7 @@ import { Search } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import './index.less';
-import { RAG-MedQALogo } from './RAG-MedQA-log';
+import { RagMedQALogo } from './ragflow-log';
 
 export default function SearchPage({
   isSearching,
@@ -28,7 +28,7 @@ export default function SearchPage({
   return (
     <section className="relative w-full flex transition-all justify-center items-center mt-[15vh]">
       <div className="relative z-10 px-8 pt-8 flex  text-transparent flex-col justify-center items-center w-[780px]">
-        <RAG-MedQALogo></RAG-MedQALogo>
+        <RagMedQALogo></RagMedQALogo>
         <div className="rounded-lg  text-primary text-xl sticky flex justify-center w-full transform scale-100 mt-8 p-6 h-[240px] border">
           {!isSearching && <Spotlight className="z-0" />}
           <div className="flex flex-col justify-center items-center  w-2/3">

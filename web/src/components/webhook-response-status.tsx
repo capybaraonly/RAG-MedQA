@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { RAG-MedQAFormItem } from './RAG-MedQA-form';
+import { RagMedQAFormItem } from './ragflow-form';
 import { Input } from './ui/input';
 
 type WebHookResponseStatusFormFieldProps = {
@@ -12,8 +12,8 @@ export function WebHookResponseStatusFormField({
   const { t } = useTranslation();
 
   return (
-    <RAG-MedQAFormItem name={name} label={t('flow.webhook.status')}>
+    <RagMedQAFormItem name={name} label={t('flow.webhook.status')}>
       <Input type="number"></Input>
-    </RAG-MedQAFormItem>
+    </RagMedQAFormItem>
   );
 }

@@ -1,5 +1,5 @@
-import { RAG-MedQAFormItem } from '@/components/RAG-MedQA-form';
-import { RAG-MedQASelect } from '@/components/ui/select';
+import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQASelect } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { LLMFactory } from '@/constants/llm';
 import { buildOptions } from '@/utils/form';
@@ -60,7 +60,7 @@ export function MinerUOptionsFormField({
         {t('knowledgeConfiguration.mineruOptions', 'MinerU Options')}
       </div>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('mineru_parse_method')}
         label={t('knowledgeConfiguration.mineruParseMethod', 'Parse Method')}
         tooltip={t(
@@ -70,16 +70,16 @@ export function MinerUOptionsFormField({
         horizontal={true}
       >
         {(field) => (
-          <RAG-MedQASelect
+          <RagMedQASelect
             value={field.value || 'auto'}
             onChange={field.onChange}
             options={parseMethodOptions}
             placeholder={t('common.selectPlaceholder', 'Select value')}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('mineru_lang')}
         label={t('knowledgeConfiguration.mineruLanguage', 'Language')}
         tooltip={t(
@@ -89,16 +89,16 @@ export function MinerUOptionsFormField({
         horizontal={true}
       >
         {(field) => (
-          <RAG-MedQASelect
+          <RagMedQASelect
             value={field.value || 'English'}
             onChange={field.onChange}
             options={languageOptions}
             placeholder={t('common.selectPlaceholder', 'Select value')}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('mineru_formula_enable')}
         label={t(
           'knowledgeConfiguration.mineruFormulaEnable',
@@ -117,9 +117,9 @@ export function MinerUOptionsFormField({
             onCheckedChange={field.onChange}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
 
-      <RAG-MedQAFormItem
+      <RagMedQAFormItem
         name={buildName('mineru_table_enable')}
         label={t(
           'knowledgeConfiguration.mineruTableEnable',
@@ -138,7 +138,7 @@ export function MinerUOptionsFormField({
             onCheckedChange={field.onChange}
           />
         )}
-      </RAG-MedQAFormItem>
+      </RagMedQAFormItem>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { FilterButton } from '@/components/list-filter-bar';
 import { FilterPopover } from '@/components/list-filter-bar/filter-popover';
 import { FilterCollection } from '@/components/list-filter-bar/interface';
 import { Card } from '@/components/ui/card';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import { useTranslate } from '@/hooks/common-hooks';
 import { useTestRetrieval } from '@/hooks/use-knowledge-request';
 import { ITestingChunk } from '@/interfaces/database/knowledge';
@@ -96,12 +96,12 @@ export function TestingResult({
                 </article>
               ))}
             </section>
-            <RAG-MedQAPagination
+            <RagMedQAPagination
               total={data.total}
               onChange={onPaginationChange}
               current={page}
               pageSize={pageSize}
-            ></RAG-MedQAPagination>
+            ></RagMedQAPagination>
           </>
         )}
         {!data.chunks?.length && !loading && (

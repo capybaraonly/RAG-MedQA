@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { LogicalOperator } from '../logical-operator';
 import { Card, CardContent } from '../ui/card';
 import { InputSelect } from '../ui/input-select';
-import { RAG-MedQASelect } from '../ui/select';
+import { RagMedQASelect } from '../ui/select';
 
 export function MetadataFilterConditions({
   kbIds,
@@ -134,7 +134,7 @@ export function MetadataFilterConditions({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <RAG-MedQASelect
+                      <RagMedQASelect
                         {...field}
                         onChange={(value) => {
                           handleChangeOp(value);

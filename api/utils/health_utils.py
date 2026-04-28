@@ -142,7 +142,7 @@ def get_redis_info():
         }
 
 
-def check_RAG-MedQA_server_alive():
+def check_RAG_MedQA_server_alive():
     start_time = timer()
     try:
         url = f'http://{settings.HOST_IP}:{settings.HOST_PORT}/api/v1/system/ping'
@@ -217,3 +217,8 @@ def run_health_checks() -> tuple[dict, bool]:
                 result.get("storage") == "ok")
     result["status"] = "ok" if all_ok else "nok"
     return result, all_ok
+
+
+def get_oceanbase_status():
+    """Stub: OceanBase not used in this fork — returns not-configured status."""
+    return {"status": "not_configured", "message": "OceanBase is not used in this deployment."}

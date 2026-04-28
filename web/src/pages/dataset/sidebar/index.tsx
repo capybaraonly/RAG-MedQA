@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import { IconFontFill } from '@/components/icon-font';
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Button } from '@/components/ui/button';
 import { useSecondPathName } from '@/hooks/route-hook';
 import {
@@ -79,7 +79,7 @@ export function SideBar({ refreshCount }: PropType) {
           gridTemplateAreas: '"avatar title" "avatar stats"',
         }}
       >
-        <RAG-MedQAAvatar
+        <RagMedQAAvatar
           avatar={data.avatar}
           name={data.name}
           className="size-16"

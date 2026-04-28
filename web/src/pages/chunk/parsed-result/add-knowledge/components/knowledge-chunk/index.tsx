@@ -27,9 +27,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import message from '@/components/ui/message';
 import {
-  RAG-MedQAPagination,
-  RAG-MedQAPaginationType,
-} from '@/components/ui/RAG-MedQA-pagination';
+  RagMedQAPagination,
+  RagMedQAPaginationType,
+} from '@/components/ui/ragflow-pagination';
 import { Spin } from '@/components/ui/spin';
 import {
   QueryStringMap,
@@ -75,7 +75,7 @@ const Chunk = () => {
   useEffect(() => {
     setChunkList(data);
   }, [data]);
-  const onPaginationChange: RAG-MedQAPaginationType['onChange'] = (
+  const onPaginationChange: RagMedQAPaginationType['onChange'] = (
     page,
     size,
   ) => {
@@ -268,7 +268,7 @@ const Chunk = () => {
                 </div>
 
                 <footer className="mt-5">
-                  <RAG-MedQAPagination
+                  <RagMedQAPagination
                     pageSize={pagination.pageSize}
                     current={pagination.current}
                     total={total}

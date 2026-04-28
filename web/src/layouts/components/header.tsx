@@ -1,5 +1,5 @@
 import { IconFontFill } from '@/components/icon-font';
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -131,7 +131,7 @@ export function Header({
           className="relative ms-3"
           data-testid="settings-entrypoint"
         >
-          <RAG-MedQAAvatar
+          <RagMedQAAvatar
             name={nickname}
             avatar={avatar}
             isPerson

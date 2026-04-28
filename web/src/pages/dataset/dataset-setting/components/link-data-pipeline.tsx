@@ -1,6 +1,6 @@
 import { IDataPipelineSelectNode } from '@/components/data-pipeline-select';
 import { IconFont } from '@/components/icon-font';
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal/modal';
 import { Link } from 'lucide-react';
@@ -62,7 +62,7 @@ const DataPipelineItem = (props: DataPipelineItemProps) => {
   return (
     <div className="flex items-center justify-between gap-1 px-2 rounded-md border">
       <div className="flex items-center gap-1">
-        <RAG-MedQAAvatar avatar={avatar} name={name} className="size-4" />
+        <RagMedQAAvatar avatar={avatar} name={name} className="size-4" />
         <div>{name}</div>
         {/* {isDefault && (
           <div className="text-xs bg-text-secondary text-bg-base px-2 py-1 rounded-md">

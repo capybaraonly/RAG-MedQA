@@ -47,7 +47,15 @@ redis:
 task_executor:
   message_queue_type: 'redis'
 user_default_llm:
+  factory: 'DeepSeek'
+  api_key: 'sk-10dfed8c0eaf43c2b6e7cbc12d71daff'
+  base_url: 'https://api.deepseek.com/v1'
   default_models:
+    chat_model:
+      name: 'deepseek-chat'
+      factory: 'DeepSeek'
+      api_key: 'sk-10dfed8c0eaf43c2b6e7cbc12d71daff'
+      base_url: 'https://api.deepseek.com/v1'
     embedding_model:
       name: 'bge-m3'
       factory: 'xxxx'

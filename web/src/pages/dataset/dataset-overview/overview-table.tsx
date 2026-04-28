@@ -2,9 +2,9 @@ import { EmptyType } from '@/components/empty/constant';
 import Empty from '@/components/empty/empty';
 import FileStatusBadge from '@/components/file-status-badge';
 import { FileIcon, IconFontFill } from '@/components/icon-font';
-import { RAG-MedQAAvatar } from '@/components/RAG-MedQA-avatar';
+import { RagMedQAAvatar } from '@/components/ragflow-avatar';
 import { Button } from '@/components/ui/button';
-import { RAG-MedQAPagination } from '@/components/ui/RAG-MedQA-pagination';
+import { RagMedQAPagination } from '@/components/ui/ragflow-pagination';
 import {
   Table,
   TableBody,
@@ -136,7 +136,7 @@ export const getFileLogsTableColumns = (
         const pipelineTitle = title === 'naive' ? 'general' : title;
         return (
           <div className="flex items-center gap-2 text-text-primary">
-            <RAG-MedQAAvatar
+            <RagMedQAAvatar
               avatar={row.original.avatar}
               name={pipelineTitle}
               className="size-4"
@@ -468,7 +468,7 @@ const FileLogsTable: FC<FileLogsTableProps> = ({
       </Table>
 
       <div className="mt-auto flex items-center justify-end">
-        <RAG-MedQAPagination
+        <RagMedQAPagination
           {...{ current: pagination.current, pageSize: pagination.pageSize }}
           total={pagination.total}
           onChange={(page, pageSize) => setPagination({ page, pageSize })}
