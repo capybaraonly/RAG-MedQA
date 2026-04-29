@@ -6,8 +6,8 @@ import { toLower } from 'lodash';
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { RagMedQAAvatar } from './ragflow-avatar';
-import { RagMedQAFormItem } from './ragflow-form';
+import { RagMedQAAvatar } from './RAG-MedQA-avatar';
+import { RagMedQAFormItem } from './RAG-MedQA-form';
 import { MultiSelect } from './ui/multi-select';
 
 function buildQueryVariableOptionsByShowVariable(showVariable?: boolean) {

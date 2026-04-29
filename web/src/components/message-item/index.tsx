@@ -19,7 +19,7 @@ import {
   extractPDFDownloadInfo,
   removePDFDownloadInfo,
 } from '../pdf-download-button';
-import { RagMedQAAvatar } from '../ragflow-avatar';
+import { RagMedQAAvatar } from '../RAG-MedQA-avatar';
 import SvgIcon from '../svg-icon';
 import { useTheme } from '../theme-provider';
 import { AssistantGroupButton, UserGroupButton } from './group-button';

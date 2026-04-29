@@ -3,7 +3,7 @@ import { useTranslate } from '@/hooks/common-hooks';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { SelectWithSearch } from '../originui/select-with-search';
-import { RagMedQAFormItem } from '../ragflow-form';
+import { RagMedQAFormItem } from '../RAG-MedQA-form';
 import { MetadataFilterConditions } from './metadata-filter-conditions';
 import { MetadataSemiAutoFields } from './metadata-semi-auto-fields';
 

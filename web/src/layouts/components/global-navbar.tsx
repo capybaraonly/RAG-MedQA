@@ -9,26 +9,16 @@ import { Routes } from '@/routes';
 import { supportsCssAnchor } from '@/utils/css-support';
 
 const PathMap = {
-  [Routes.Datasets]: [Routes.Datasets, Routes.DatasetBase],
   [Routes.Chats]: [Routes.Chats, Routes.Chat],
-  [Routes.Searches]: [Routes.Searches, Routes.Search],
-  [Routes.Files]: [Routes.Files],
 } as const;
 
 const menuItems = [
   { path: Routes.Root, name: 'header.Root', icon: LucideHouse },
-  { path: Routes.Datasets, name: 'header.dataset' },
   {
     path: Routes.Chats,
     name: 'header.chat',
     'data-testid': 'nav-chat',
   },
-  {
-    path: Routes.Searches,
-    name: 'header.search',
-    'data-testid': 'nav-search',
-  },
-  { path: Routes.Files, name: 'header.fileManager' },
 ];
 
 const GlobalNavbar = supportsCssAnchor

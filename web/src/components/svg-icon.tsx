@@ -4,7 +4,7 @@ import Icon from '@ant-design/icons';
 import { IconComponentProps } from '@ant-design/icons/lib/components/Icon';
 import { memo, useMemo } from 'react';
 import { IconFontFill } from './icon-font';
-import { RagMedQAAvatar } from './ragflow-avatar';
+import { RagMedQAAvatar } from './RAG-MedQA-avatar';
 import { useIsDarkTheme } from './theme-provider';
 
 // const importAll = (requireContext: __WebpackModuleApi.RequireContext) => {

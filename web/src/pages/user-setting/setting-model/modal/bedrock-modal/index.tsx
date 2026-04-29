@@ -1,5 +1,5 @@
 import { SelectWithSearch } from '@/components/originui/select-with-search';
-import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQAFormItem } from '@/components/RAG-MedQA-form';
 import { ButtonLoading } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';

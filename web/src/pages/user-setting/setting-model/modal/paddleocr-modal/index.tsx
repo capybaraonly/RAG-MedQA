@@ -1,4 +1,4 @@
-import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQAFormItem } from '@/components/RAG-MedQA-form';
 import {
   Dialog,
   DialogContent,

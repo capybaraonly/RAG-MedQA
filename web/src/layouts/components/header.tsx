@@ -1,5 +1,4 @@
-import { IconFontFill } from '@/components/icon-font';
-import { RagMedQAAvatar } from '@/components/ragflow-avatar';
+import { RagMedQAAvatar } from '@/components/RAG-MedQA-avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,17 +7,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useChangeLanguage } from '@/hooks/logic-hooks';
-import {
-  useFetchUserInfo,
-  useListTenant,
-} from '@/hooks/use-user-setting-request';
+import { useFetchUserInfo } from '@/hooks/use-user-setting-request';
 import { cn } from '@/lib/utils';
-import { TenantRole } from '@/pages/user-setting/constants';
 import { Routes } from '@/routes';
-import { LucideChevronDown, LucideCircleHelp } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { LucideChevronDown } from 'lucide-react';
+import React from 'react';
 import { Link, useLocation } from 'react-router';
-import { BellButton } from './bell-button';
 import GlobalNavbar from './global-navbar';
 import ThemeButton from './theme-button';
 
@@ -35,12 +29,6 @@ export function Header({
   const {
     data: { language = 'en', avatar, nickname },
   } = useFetchUserInfo();
-
-  const { data: tenantData } = useListTenant();
-  const hasNotification = useMemo(
-    () => tenantData?.some((x) => x.role === TenantRole.Invite),
-    [tenantData],
-  );
 
   const currentLanguage = supportedLanguages.find((x) => x.code === language);
 
@@ -73,24 +61,6 @@ export function Header({
         className="flex items-center justify-end gap-4 text-text-badge"
         data-testid="auth-status"
       >
-        <a
-          className="p-2 text-text-secondary hover:text-text-primary focus-visible:text-text-primary"
-          target="_blank"
-          href="https://discord.com/invite/NjYzJD3GM3"
-          rel="noreferrer noopener"
-        >
-          <IconFontFill name="a-DiscordIconSVGVectorIcon" />
-        </a>
-
-        <a
-          className="p-2 text-text-secondary hover:text-text-primary focus-visible:text-text-primary"
-          target="_blank"
-          href="https://github.com/infiniflow/RAG-MedQA"
-          rel="noreferrer noopener"
-        >
-          <IconFontFill name="GitHub" />
-        </a>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="flex items-center gap-1" variant="ghost">
@@ -111,20 +81,7 @@ export function Header({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button
-          asLink
-          variant="ghost"
-          size="icon"
-          to="https://RAG-MedQA.io/docs/dev/category/user-guides"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          <LucideCircleHelp className="size-[1em]" />
-        </Button>
-
         <ThemeButton />
-
-        {hasNotification && <BellButton />}
 
         <Link
           to={Routes.UserSetting}

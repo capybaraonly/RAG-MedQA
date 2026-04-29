@@ -1,4 +1,4 @@
-import { RagMedQAAvatar } from '@/components/ragflow-avatar';
+import { RagMedQAAvatar } from '@/components/RAG-MedQA-avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/utils/date';
 import { t } from 'i18next';

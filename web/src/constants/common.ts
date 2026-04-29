@@ -199,7 +199,7 @@ export const SupportedPreviewDocumentTypes = [...ExceptiveType];
 //#endregion
 
 export enum Platform {
-  RAG-MedQA = 'RAG-MedQA',
+  RAGMedQA = 'RAG-MedQA',
   Dify = 'Dify',
   FastGPT = 'FastGPT',
   Coze = 'Coze',

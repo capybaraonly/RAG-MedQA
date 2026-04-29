@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
-import { RagMedQAFormItem } from './ragflow-form';
+import { RagMedQAFormItem } from './RAG-MedQA-form';
 import { ButtonLoading } from './ui/button';
 import {
   Dialog,

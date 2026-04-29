@@ -1,4 +1,4 @@
-import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQAFormItem } from '@/components/RAG-MedQA-form';
 import { Input } from '@/components/ui/input';
 import { RagMedQASelect } from '@/components/ui/select';
 import { LLMFactory } from '@/constants/llm';

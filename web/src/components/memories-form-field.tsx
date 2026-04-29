@@ -1,6 +1,6 @@
 import { useFetchAllMemoryList } from '@/hooks/use-memory-request';
 import { useTranslation } from 'react-i18next';
-import { RagMedQAFormItem } from './ragflow-form';
+import { RagMedQAFormItem } from './RAG-MedQA-form';
 import { MultiSelect } from './ui/multi-select';
 
 type MemoriesFormFieldProps = {

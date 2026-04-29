@@ -1,6 +1,6 @@
 'use client';
 
-import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQAFormItem } from '@/components/RAG-MedQA-form';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { LucidePencil } from 'lucide-react';

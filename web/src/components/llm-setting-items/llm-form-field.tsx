@@ -2,7 +2,7 @@ import { LlmModelType } from '@/constants/knowledge';
 import { useComposeLlmOptionsByModelTypes } from '@/hooks/use-llm-request';
 import { useTranslation } from 'react-i18next';
 import { SelectWithSearch } from '../originui/select-with-search';
-import { RagMedQAFormItem } from '../ragflow-form';
+import { RagMedQAFormItem } from '../RAG-MedQA-form';
 
 export type LLMFormFieldProps = {
   options?: any[];

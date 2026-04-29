@@ -1,7 +1,7 @@
 'use client';
 
 import { AvatarUpload } from '@/components/avatar-upload';
-import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQAFormItem } from '@/components/RAG-MedQA-form';
 import { cn } from '@/lib/utils';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';

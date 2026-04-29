@@ -2,7 +2,7 @@ import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import EmbedDialog from '@/components/embed-dialog';
 import { useShowEmbedModal } from '@/components/embed-dialog/use-show-embed-dialog';
 import { MoreButton } from '@/components/more-button';
-import { RagMedQAAvatar } from '@/components/ragflow-avatar';
+import { RagMedQAAvatar } from '@/components/RAG-MedQA-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchInput } from '@/components/ui/input';

@@ -37,7 +37,7 @@ import {
   oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { z } from 'zod';
-import { RagMedQAFormItem } from '../ragflow-form';
+import { RagMedQAFormItem } from '../RAG-MedQA-form';
 import { SwitchFormField } from '../switch-fom-field';
 import { useIsDarkTheme } from '../theme-provider';
 import { Input } from '../ui/input';

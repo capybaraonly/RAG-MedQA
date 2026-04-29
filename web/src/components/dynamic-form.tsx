@@ -20,7 +20,7 @@ import { ZodSchema, z } from 'zod';
 
 import EditTag from '@/components/edit-tag';
 import { SelectWithSearch } from '@/components/originui/select-with-search';
-import { RagMedQAFormItem } from '@/components/ragflow-form';
+import { RagMedQAFormItem } from '@/components/RAG-MedQA-form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';

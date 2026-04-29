@@ -1,5 +1,5 @@
 import { useBuildSwitchLogicOperatorOptions } from '@/hooks/logic-hooks/use-build-options';
-import { RagMedQAFormItem } from './ragflow-form';
+import { RagMedQAFormItem } from './RAG-MedQA-form';
 import { RagMedQASelect } from './ui/select';
 
 type LogicalOperatorProps = { name: string };

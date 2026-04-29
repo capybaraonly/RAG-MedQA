@@ -13,7 +13,7 @@ import {
 import { DialogProps } from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { RagMedQAAvatar } from './ragflow-avatar';
+import { RagMedQAAvatar } from './RAG-MedQA-avatar';
 import { Separator } from './ui/separator';
 
 interface IProps {

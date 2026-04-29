@@ -1,4 +1,4 @@
-import { RagMedQAAvatar } from '@/components/ragflow-avatar';
+import { RagMedQAAvatar } from '@/components/RAG-MedQA-avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/utils/date';
 import { ReactNode } from 'react';

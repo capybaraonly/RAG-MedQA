@@ -1,5 +1,4 @@
-import { IconFontFill } from '@/components/icon-font';
-import { RagMedQAAvatar } from '@/components/ragflow-avatar';
+import { RagMedQAAvatar } from '@/components/RAG-MedQA-avatar';
 import ThemeSwitch from '@/components/theme-switch';
 import { Button } from '@/components/ui/button';
 import { Domain } from '@/constants/common';
@@ -11,61 +10,23 @@ import {
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { TFunction } from 'i18next';
-import {
-  LucideBox,
-  LucideServer,
-  LucideUnplug,
-  LucideUser,
-  LucideUsers,
-} from 'lucide-react';
+import { LucideBox, LucideUser } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHandleMenuClick } from './hooks';
 
-const menuItems = (t: TFunction, isAdmin: boolean) => [
-  ...(isAdmin
-    ? [
-        {
-          icon: <LucideServer className="size-[1em]" />,
-          label: t('setting.dataSources'),
-          key: Routes.DataSource,
-        },
-        {
-          icon: <LucideBox className="size-[1em]" />,
-          label: t('setting.model'),
-          key: Routes.Model,
-          'data-testid': 'settings-nav-model-providers',
-        },
-        {
-          icon: <IconFontFill name="mcp" className="size-[1em]" />,
-          label: 'MCP',
-          key: Routes.Mcp,
-        },
-        {
-          icon: <LucideUsers className="size-[1em]" />,
-          label: t('setting.team'),
-          key: Routes.Team,
-        },
-      ]
-    : []),
+const menuItems = (t: TFunction) => [
+  {
+    icon: <LucideBox className="size-[1em]" />,
+    label: t('setting.model'),
+    key: Routes.Model,
+    'data-testid': 'settings-nav-model-providers',
+  },
   {
     icon: <LucideUser className="size-[1em]" />,
     label: t('setting.profile'),
     key: Routes.Profile,
   },
-  {
-    icon: <LucideUnplug className="size-[1em]" />,
-    label: t('setting.api'),
-    key: Routes.Api,
-  },
-  // {
-  //   icon: MessageSquareQuote,
-  //   label: 'Prompt Templates',
-  //   key: Routes.Profile,
-  // },
-  // { icon: TextSearch, label: 'Retrieval Templates', key: Routes.Profile },
-  // { icon: Cog, label: t('setting.system'), key: Routes.System },
-  // { icon: Banknote, label: 'Plan', key: Routes.Plan },
 ];
 
 export function SideBar() {
@@ -96,7 +57,7 @@ export function SideBar() {
 
       <nav className="flex-1 overflow-auto mt-4 py-1">
         <ul className="px-6 flex flex-col gap-5">
-          {menuItems(t, !!userInfo?.is_superuser).map((item) => {
+          {menuItems(t).map((item) => {
             const { key, icon, label, ...rest } = item;
 
             return (
@@ -115,14 +76,6 @@ export function SideBar() {
                     {icon}
                     <span>{label}</span>
                   </section>
-                  {/* {item.key === Routes.System && (
-                    <div className="mr-2 px-2 bg-accent-primary-5 text-accent-primary rounded-md">
-                      {version}
-                    </div>
-                  )} */}
-                  {/* {active && (
-                    <div className="absolute right-0 w-[5px] h-[66px] bg-primary rounded-l-xl shadow-[0_0_5.94px_#7561ff,0_0_11.88px_#7561ff,0_0_41.58px_#7561ff,0_0_83.16px_#7561ff,0_0_142.56px_#7561ff,0_0_249.48px_#7561ff]" />
-                  )} */}
                 </Button>
               </li>
             );
