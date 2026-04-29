@@ -234,3 +234,7 @@ bin/*
 !bin/.gitkeep
 
 plan.md
+
+# 训练/知识库原始数据（体积过大，不入 git）
+data/medical/
+data/.checkpoints/
