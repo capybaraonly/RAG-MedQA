@@ -31,6 +31,22 @@ module.exports = {
         0.5: '0.5px',
       },
       colors: {
+        /* 岐黄问诊 主题色 */
+        qh: {
+          cream: '#F5F0E8',
+          sidebar: '#EBE5D9',
+          green: '#4A7A59',
+          'green-dark': '#3A6047',
+          'green-light': '#EBF3EE',
+          gold: '#B8860B',
+          ink: '#2A1F14',
+          brown: '#7A6E5F',
+          border: '#D4C9B5',
+          'border-light': '#E8E0D0',
+          white: '#FFFFFF',
+          'msg-user': '#4A7A59',
+          'msg-bot': '#FFFFFF',
+        },
         border: 'var(--border-default)',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
