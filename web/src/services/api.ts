@@ -135,6 +135,7 @@ export async function* askStream(
   question: string,
   sessionId: string,
   onSessionId?: (id: string) => void,
+  signal?: AbortSignal,
 ): AsyncGenerator<AskChunk> {
   const res = await fetch('/api/v1/chats/ask', {
     method: 'POST',
@@ -145,6 +146,7 @@ export async function* askStream(
       session_id: sessionId,
       stream: true,
     }),
+    signal,
   });
 
   if (!res.ok || !res.body) {
@@ -155,11 +157,16 @@ export async function* askStream(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
+  let stopped = false;
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+    if (done) {
+      // flush residual decoder bytes from the final chunk
+      buffer += decoder.decode();
+    } else {
+      buffer += decoder.decode(value, { stream: true });
+    }
 
     const lines = buffer.split('\n');
     buffer = lines.pop() ?? '';
@@ -174,12 +181,14 @@ export async function* askStream(
         const parsed = JSON.parse(raw);
         if (parsed.code !== 0) {
           yield { answer: parsed.message ?? '发生错误', done: true };
-          return;
+          stopped = true;
+          break;
         }
         // final sentinel
         if (parsed.data === true) {
           yield { answer: '', done: true };
-          return;
+          stopped = true;
+          break;
         }
         const chunk = parsed.data as { answer: string; session_id?: string };
         if (chunk.session_id && onSessionId) onSessionId(chunk.session_id);
@@ -188,6 +197,8 @@ export async function* askStream(
         // skip malformed lines
       }
     }
+
+    if (done || stopped) break;
   }
 }
 

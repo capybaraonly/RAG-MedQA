@@ -273,9 +273,11 @@ async def chats_ask():
         if not chat_id:
             return get_data_error_result(message="chat_id is required")
 
+        tenant_id = current_user.id
+
         async def generate():
             async for ans in async_completion(
-                tenant_id=current_user.id,
+                tenant_id=tenant_id,
                 chat_id=chat_id,
                 question=question,
                 name=name,

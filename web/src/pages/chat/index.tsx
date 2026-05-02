@@ -87,6 +87,8 @@ export default function ChatPage() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState('');
 
+  // monotonically increasing version number to invalidate stale callbacks
+  const versionRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -121,68 +123,104 @@ export default function ChatPage() {
   }, [input]);
 
   async function selectSession(s: Session) {
+    // bump version to invalidate any in-flight updates from previous session
+    versionRef.current += 1;
     setActiveId(s.id);
-    // show existing messages (skip first prologue if only assistant message)
-    const msgs = s.message ?? [];
-    const filtered = msgs.filter(
+    setStreaming(false);
+    // extract messages from the sessions state, assign stable id-based keys
+    const msgs: Message[] = (s.message ?? []).filter(
       (m, i) => !(i === 0 && m.role === 'assistant'),
     );
-    setMessages(filtered);
+    // assign synthetic ids to server messages that lack them
+    const deduped: Message[] = msgs.map((m, i) => ({
+      ...m,
+      id: m.id || `srv-${s.id}-${i}`,
+    }));
+    setMessages(deduped);
   }
 
   async function startNewChat(firstQuestion?: string) {
     const question = firstQuestion ?? input.trim();
     if (!question) return;
 
-    // create session with first few chars as name
     const sessionName =
       question.slice(0, 20) + (question.length > 20 ? '…' : '');
     const session = await createSession(sessionName);
     if (!session) return;
 
+    versionRef.current += 1;
     setSessions((prev) => [session, ...prev]);
     setActiveId(session.id);
     setMessages([]);
-    await sendMessage(question, session.id);
+    await sendMessage(question, session.id, true);
   }
 
-  async function sendMessage(text: string, sid?: string) {
+  async function sendMessage(text: string, sid?: string, skipGuard = false) {
     const sessionId = sid ?? activeId;
-    if (!sessionId || !text.trim() || streaming) return;
+    if (!sessionId || !text.trim()) return;
+    if (!skipGuard && streaming) return;
 
     const question = text.trim();
     setInput('');
 
+    const v = versionRef.current;
+
     const userMsg: Message = {
       role: 'user',
       content: question,
-      id: Date.now().toString(),
+      id: `u-${Date.now()}`,
     };
     setMessages((prev) => [...prev, userMsg]);
     setStreaming(true);
 
-    const botMsg: Message = { role: 'assistant', content: '', id: 'streaming' };
+    const botMsg: Message = {
+      role: 'assistant',
+      content: '',
+      id: `s-${Date.now()}`,
+    };
     setMessages((prev) => [...prev, botMsg]);
 
+    const streamId = botMsg.id;
+    const controller = new AbortController();
+    let aborted = false;
     let fullAnswer = '';
+
     try {
-      for await (const chunk of askStream(question, sessionId)) {
+      for await (const chunk of askStream(
+        question,
+        sessionId,
+        undefined,
+        controller.signal,
+      )) {
+        if (aborted) return;
+        // bail out if another session was selected or a new send started
+        if (versionRef.current !== v) {
+          aborted = true;
+          controller.abort();
+          return;
+        }
         if (chunk.done) break;
         fullAnswer = chunk.answer;
+        // use functional update with the captured streamId so we never mix streams
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === 'streaming' ? { ...m, content: fullAnswer } : m,
+            m.id === streamId ? { ...m, content: fullAnswer } : m,
           ),
         );
       }
-    } finally {
+    } catch {
+      // abort or network error — stop silently
+      aborted = true;
+    }
+
+    if (!aborted && versionRef.current === v) {
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === 'streaming' ? { ...m, id: Date.now().toString() } : m,
+          m.id === streamId ? { ...m, id: `a-${Date.now()}` } : m,
         ),
       );
       setStreaming(false);
-      // refresh session list to update timestamps
+      // refresh session list so sidebar times update
       loadSessions();
     }
   }
@@ -218,6 +256,14 @@ export default function ChatPage() {
     setRenamingId(null);
   }
 
+  function handleNewChat() {
+    versionRef.current += 1;
+    setActiveId(null);
+    setMessages([]);
+    setStreaming(false);
+    setInput('');
+  }
+
   const nickname = user?.nickname || user?.email?.split('@')[0] || '用户';
   const showWelcome = !activeId || messages.length === 0;
 
@@ -238,11 +284,7 @@ export default function ChatPage() {
         {/* New chat button */}
         <div className="px-3 pt-3 pb-2">
           <button
-            onClick={() => {
-              setActiveId(null);
-              setMessages([]);
-              setInput('');
-            }}
+            onClick={handleNewChat}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-qh-green text-white text-sm font-medium hover:bg-qh-green-dark transition"
           >
             <svg

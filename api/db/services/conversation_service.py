@@ -164,7 +164,7 @@ async def async_completion(tenant_id, chat_id, question, name="New session", ses
     dia.kb_ids = list(set(dia.kb_ids + kb_ids))
     if not conv.reference:
         conv.reference = []
-    conv.message.append({"role": "assistant", "content": "", "id": message_id})
+    conv.message.append({"role": "assistant", "content": "", "id": str(uuid4())})
     conv.reference.append({"chunks": [], "doc_aggs": []})
 
     if stream:
