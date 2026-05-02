@@ -16,7 +16,7 @@ from common import settings
 
 from common.misc_utils import thread_pool_exec
 
-def index_name(uid): return f"RAG-MedQA_{uid}"
+def index_name(uid): return f"rag-medqa_{uid}"
 
 
 class Dealer:
