@@ -248,7 +248,8 @@ RAG-MedQA/
 │   │   ├── sdk/doc.py            # 文档管理接口
 │   │   ├── kb_app.py             # 知识库 CRUD
 │   │   ├── user_app.py           # 用户注册 / 登录 / 设置
-│   │   └── llm_app.py            # LLM 模型配置
+│   │   ├── llm_app.py            # LLM 模型配置
+│   │   └── evaluation_app.py     # RAG 评估 API 路由
 │   ├── db/
 │   │   ├── db_models.py          # Peewee ORM 模型定义（20+ 表）
 │   │   ├── services/             # 业务逻辑层
@@ -660,15 +661,82 @@ data:{"code":0,"data":true}
 
 ## 评估体系
 
-系统内置 RAG 评估管道（`api/db/services/evaluation_service.py`）：
+系统内置 RAG 评估管道，通过 API 管理数据集和测试用例，运行评估并查看指标。
 
-1. **数据集**（`EvaluationDataset`）：包含 ground truth 问题、参考答案、预期召回文档
-2. **评估运行**（`EvaluationRun`）：配置待评估的知识库和 LLM 参数
-3. **评估结果**（`EvaluationResult`）：每条 case 的实际生成答案、检索 chunk 列表、各项指标
+### 数据模型
 
-**评估指标**：
-- 检索指标：Recall@K、Precision@K、MRR
-- 生成指标：与参考答案的语义相似度
+| 表 | 说明 |
+|---|---|
+| `EvaluationDataset` | 评估数据集，绑定知识库，包含 ground truth 测试用例 |
+| `EvaluationCase` | 单条测试用例：问题、参考答案、预期召回文档/ chunk |
+| `EvaluationRun` | 一次评估运行，关联数据集和对话配置 |
+| `EvaluationResult` | 每条 case 的实际输出：生成答案、检索 chunk 列表、各项指标 |
+
+### 已实现的指标
+
+| 指标 | 说明 |
+|---|---|
+| `precision` | 检索 chunk 中相关 chunk 的占比 |
+| `recall` | 所有相关 chunk 中被检索到的比例 |
+| `f1_score` | Precision 和 Recall 的调和平均 |
+| `hit_rate` | 是否至少命中一个相关 chunk |
+| `mrr` | 首个相关 chunk 排名的倒数均值（Mean Reciprocal Rank） |
+| `answer_length` | 生成答案的字符数 |
+| `has_answer` | 是否生成了非空答案 |
+
+### 待实现（需要 LLM-as-judge）
+
+使用 LLM 作为评判者自动评估生成质量，目前为预留接口：
+
+- **Faithfulness**（忠实度）：生成答案是否与检索上下文一致，有无幻觉
+- **Answer Relevance**（答案相关性）：答案是否切题
+- **Context Relevance**（上下文相关性）：检索到的 chunk 与问题的相关程度
+
+### API 端点
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `POST` | `/v1/evaluation/datasets` | 创建评估数据集 |
+| `GET` | `/v1/evaluation/datasets` | 数据集列表 |
+| `GET` | `/v1/evaluation/datasets/:id` | 数据集详情（含测试用例） |
+| `PUT` | `/v1/evaluation/datasets/:id` | 更新数据集 |
+| `DELETE` | `/v1/evaluation/datasets/:id` | 删除数据集 |
+| `POST` | `/v1/evaluation/datasets/:id/cases` | 添加测试用例 |
+| `POST` | `/v1/evaluation/datasets/:id/cases/import` | 批量导入测试用例 |
+| `DELETE` | `/v1/evaluation/datasets/:id/cases/:cid` | 删除测试用例 |
+| `POST` | `/v1/evaluation/runs` | 启动评估运行 |
+| `GET` | `/v1/evaluation/runs` | 运行列表 |
+| `GET` | `/v1/evaluation/runs/:id` | 运行详情（含逐 case 指标） |
+| `GET` | `/v1/evaluation/runs/:id/recommendations` | 配置优化建议 |
+
+### 使用示例
+
+```bash
+# 1. 创建评估数据集
+curl -X POST http://localhost:9380/v1/evaluation/datasets \
+  -H "Authorization: <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"高血压问答评测","kb_ids":["kb_xxx"],"description":"验证高血压相关检索和生成质量"}'
+
+# 2. 批量导入测试用例
+curl -X POST http://localhost:9380/v1/evaluation/datasets/<dataset_id>/cases/import \
+  -H "Authorization: <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"cases":[
+    {"question":"高血压患者饮食注意事项？","reference_answer":"低盐低脂，每日食盐<6g","relevant_chunk_ids":["chunk_001"]},
+    {"question":"降压药什么时候服用效果最好？","reference_answer":"清晨空腹服用长效降压药"}
+  ]}'
+
+# 3. 运行评估
+curl -X POST http://localhost:9380/v1/evaluation/runs \
+  -H "Authorization: <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"dataset_id":"<dataset_id>","dialog_id":"<dialog_id>"}'
+
+# 4. 查看结果
+curl http://localhost:9380/v1/evaluation/runs/<run_id> \
+  -H "Authorization: <token>"
+```
 
 ---
 
