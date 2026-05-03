@@ -17,7 +17,7 @@ import logging
 import os
 import pathlib
 
-from api.common.check_team_permission import check_file_team_permission
+
 from api.db import FileType
 from api.db.services import duplicate_name
 from api.db.services.document_service import DocumentService
@@ -25,7 +25,7 @@ from api.db.services.file2document_service import File2DocumentService
 from api.db.services.file_service import FileService
 from api.utils.file_utils import filename_type
 from common import settings
-from common.constants import FileSource
+from common.constants import FileSource, SYSTEM_TENANT_ID
 from common.misc_utils import get_uuid, thread_pool_exec
 
 
@@ -244,10 +244,7 @@ async def delete_files(uid: str, file_ids: list):
             e, file = FileService.get_by_id(file_id)
             if not e or not file:
                 return False, "File or Folder not found!"
-            if not file.tenant_id:
-                return False, "Tenant not found!"
-            if not check_file_team_permission(file, uid):
-                return False, "No authorization."
+
 
             if file.source_type == FileSource.KNOWLEDGEBASE:
                 continue
@@ -286,10 +283,6 @@ async def move_files(uid: str, src_file_ids: list, dest_file_id: str = None, new
         file = files_dict.get(file_id)
         if not file:
             return False, "File or folder not found!"
-        if not file.tenant_id:
-            return False, "Tenant not found!"
-        if not check_file_team_permission(file, uid):
-            return False, "No authorization."
 
     dest_folder = None
     if dest_file_id:
@@ -318,8 +311,8 @@ async def move_files(uid: str, src_file_ids: list, dest_file_id: str = None, new
                 new_folder = FileService.insert({
                     "id": get_uuid(),
                     "parent_id": dest_folder_entry.id,
-                    "tenant_id": source_file_entry.tenant_id,
-                    "created_by": source_file_entry.tenant_id,
+                    "tenant_id": SYSTEM_TENANT_ID,
+                    "created_by": SYSTEM_TENANT_ID,
                     "name": effective_name,
                     "location": "",
                     "size": 0,
@@ -392,6 +385,5 @@ def get_file_content(uid: str, file_id: str):
     e, file = FileService.get_by_id(file_id)
     if not e:
         return False, "Document not found!"
-    if not check_file_team_permission(file, uid):
-        return False, "No authorization."
+
     return True, file

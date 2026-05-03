@@ -13,12 +13,10 @@ from quart import make_response, redirect, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from api.apps.auth import get_auth_client
-from api.db import FileType, UserTenantRole
+from api.db import FileType
 
 from api.db.services.file_service import FileService
-from api.db.services.llm_service import get_init_tenant_llm
-from api.db.services.tenant_llm_service import TenantLLMService
-from api.db.services.user_service import TenantService, UserService, UserTenantService
+from api.db.services.user_service import TenantService, UserService
 from common.time_utils import current_timestamp, datetime_format, get_format_time
 from common.misc_utils import download_img, get_uuid
 from common.constants import RetCode
@@ -31,7 +29,7 @@ from api.utils.api_utils import (
     validate_request,
 )
 from api.utils.crypt import decrypt
-from api.utils.tenant_utils import ensure_tenant_model_id_for_params
+
 from rag.utils.redis_conn import REDIS_CONN
 from api.apps import login_required, current_user, login_user, logout_user
 from api.common.check_team_permission import admin_required
@@ -597,82 +595,26 @@ def rollback_user_registration(user_id):
         UserService.delete_by_id(user_id)
     except Exception:
         pass
-    try:
-        TenantService.delete_by_id(user_id)
-    except Exception:
-        pass
-    try:
-        u = UserTenantService.query(tenant_id=user_id)
-        if u:
-            UserTenantService.delete_by_id(u[0].id)
-    except Exception:
-        pass
-    try:
-        TenantLLM.delete().where(TenantLLM.tenant_id == user_id).execute()
-    except Exception:
-        pass
-
-
-def _get_global_tenant_id():
-    """Return the admin user’s ID which serves as the shared global tenant."""
-    admins = UserService.query(is_superuser=True)
-    if admins:
-        return admins[0].id
-    return None
 
 
 def user_register(user_id, user):
     user["id"] = user_id
 
-    global_tenant_id = _get_global_tenant_id()
-    if global_tenant_id is None:
-        # Fallback: create a private tenant when no admin exists yet
-        tenant = {
-            "id": user_id,
-            "name": user["nickname"] + "’s Kingdom",
-            "llm_id": settings.CHAT_MDL,
-            "embd_id": settings.EMBEDDING_MDL,
-            "asr_id": settings.ASR_MDL,
-            "parser_ids": settings.PARSERS,
-            "img2txt_id": settings.IMAGE2TEXT_MDL,
-            "rerank_id": settings.RERANK_MDL,
-        }
-        usr_tenant = {
-            "tenant_id": user_id,
-            "user_id": user_id,
-            "invited_by": user_id,
-            "role": UserTenantRole.OWNER,
-        }
-        tenant_llm = get_init_tenant_llm(user_id)
-        if not UserService.save(**user):
-            return None
-        TenantService.insert(**tenant)
-        UserTenantService.insert(**usr_tenant)
-        TenantLLMService.insert_many(tenant_llm)
-        return UserService.query(email=user["email"])
+    # Create user directly — no tenant layer
+    if not UserService.save(**user):
+        return None
 
-    # Normal path: link user to the global shared tenant as NORMAL member
-    usr_tenant = {
-        "tenant_id": global_tenant_id,
-        "user_id": user_id,
-        "invited_by": global_tenant_id,
-        "role": UserTenantRole.NORMAL,
-    }
+    # Create root file folder for the user
     file_id = get_uuid()
     file = {
         "id": file_id,
         "parent_id": file_id,
-        "tenant_id": global_tenant_id,
         "created_by": user_id,
         "name": "/",
         "type": FileType.FOLDER.value,
         "size": 0,
         "location": "",
     }
-
-    if not UserService.save(**user):
-        return None
-    UserTenantService.insert(**usr_tenant)
     FileService.insert(file)
     return UserService.query(email=user["email"])
 
@@ -853,7 +795,7 @@ async def set_tenant_info():
     req = await get_request_json()
     try:
         tid = req.pop("tenant_id")
-        update_dict = ensure_tenant_model_id_for_params(tid, req)
+        update_dict = req
         TenantService.update_by_id(tid, update_dict)
         return get_json_result(data=True)
     except Exception as e:

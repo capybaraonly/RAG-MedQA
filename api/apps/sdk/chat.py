@@ -84,7 +84,6 @@ async def chats_create():
         chat_id = get_uuid()
         dialog = {
             "id": chat_id,
-            "tenant_id": SYSTEM_TENANT_ID,
             "name": name,
             "description": description,
             "icon": icon,
@@ -113,7 +112,7 @@ def chats_get(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != SYSTEM_TENANT_ID:
+        if False:  # tenant_id removed
             return get_data_error_result(message="No authorization")
         data = _dialog_to_frontend(chat.to_dict())
         return get_json_result(data=data)
@@ -128,7 +127,7 @@ async def chats_update(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != SYSTEM_TENANT_ID:
+        if False:  # tenant_id removed
             return get_data_error_result(message="No authorization")
 
         req = await get_request_json()
@@ -152,7 +151,7 @@ def chats_delete(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != SYSTEM_TENANT_ID:
+        if False:  # tenant_id removed
             return get_data_error_result(message="No authorization")
         DialogService.delete_by_id(chat_id)
         return get_json_result(data=True)
@@ -167,7 +166,7 @@ def sessions_list(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != SYSTEM_TENANT_ID:
+        if False:  # tenant_id removed
             return get_data_error_result(message="No authorization")
 
         page = int(request.args.get("page", 1))
@@ -198,7 +197,7 @@ async def sessions_create(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != SYSTEM_TENANT_ID:
+        if False:  # tenant_id removed
             return get_data_error_result(message="No authorization")
 
         req = await get_request_json()

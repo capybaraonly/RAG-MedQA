@@ -22,11 +22,21 @@ from api.db.services.tenant_llm_service import TenantLLMService
 
 
 def get_model_config_by_id(tenant_model_id: int) -> dict:
-    found, model_config = TenantLLMService.get_by_id(tenant_model_id)
-    if not found:
-        raise LookupError(f"Tenant Model with id {tenant_model_id} not found")
-    config_dict = model_config.to_dict()
-    llm = LLMService.query(llm_name=config_dict["llm_name"])
+    from api.db.system_config import get_system_llm_config
+
+    config_dict = get_system_llm_config(LLMType.CHAT)
+    if not config_dict.get("model"):
+        raise LookupError(f"Model config not found — tenant_model_id {tenant_model_id} is obsolete")
+
+    pure_name, fid = TenantLLMService.split_model_name_and_factory(config_dict["model"])
+    config_dict["llm_name"] = pure_name
+    config_dict["llm_factory"] = fid or config_dict.get("factory", "")
+    config_dict["model_type"] = LLMType.CHAT.value
+    config_dict["api_base"] = config_dict.get("base_url", "")
+
+    llm = LLMService.query(llm_name=pure_name)
+    if not llm and fid:
+        llm = LLMService.query(llm_name=pure_name, fid=fid)
     if llm:
         config_dict["is_tools"] = llm[0].is_tools
     return config_dict

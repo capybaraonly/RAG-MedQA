@@ -24,7 +24,7 @@ class MemoryService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_by_tenant_id(cls, tenant_id: str):
-        return cls.model.select().where(cls.model.tenant_id == tenant_id)
+        return cls.model.select()
 
     @classmethod
     @DB.connection_context()
@@ -39,8 +39,6 @@ class MemoryService(CommonService):
             cls.model.id,
             cls.model.name,
             cls.model.avatar,
-            cls.model.tenant_id,
-            User.nickname.alias("owner_name"),
             cls.model.memory_type,
             cls.model.storage_type,
             cls.model.embd_id,
@@ -55,7 +53,7 @@ class MemoryService(CommonService):
             cls.model.create_date,
             cls.model.create_time
         ]
-        memory = cls.model.select(*fields).join(User, on=(cls.model.tenant_id == User.id)).where(
+        memory = cls.model.select(*fields).where(
             cls.model.id == memory_id
         ).first()
         return memory
@@ -67,8 +65,6 @@ class MemoryService(CommonService):
             cls.model.id,
             cls.model.name,
             cls.model.avatar,
-            cls.model.tenant_id,
-            User.nickname.alias("owner_name"),
             cls.model.memory_type,
             cls.model.storage_type,
             cls.model.permissions,
@@ -76,9 +72,7 @@ class MemoryService(CommonService):
             cls.model.create_time,
             cls.model.create_date
         ]
-        memories = cls.model.select(*fields).join(User, on=(cls.model.tenant_id == User.id))
-        if filter_dict.get("tenant_id"):
-            memories = memories.where(cls.model.tenant_id.in_(filter_dict["tenant_id"]))
+        memories = cls.model.select(*fields)
         if filter_dict.get("memory_type"):
             memory_type_int = calculate_memory_type(filter_dict["memory_type"])
             memories = memories.where(cls.model.memory_type.bin_and(memory_type_int) > 0)
@@ -99,7 +93,6 @@ class MemoryService(CommonService):
         memory_name = duplicate_name(
             cls.query,
             name=name,
-            tenant_id=tenant_id
         )
         if len(memory_name) > MEMORY_NAME_LIMIT:
             return False, f"Memory name {memory_name} exceeds limit of {MEMORY_NAME_LIMIT}."
@@ -111,7 +104,6 @@ class MemoryService(CommonService):
             "id": get_uuid(),
             "name": memory_name,
             "memory_type": calculate_memory_type(memory_type),
-            "tenant_id": tenant_id,
             "embd_id": embd_id,
             "tenant_embd_id": tenant_embd_id,
             "llm_id": llm_id,
@@ -144,7 +136,6 @@ class MemoryService(CommonService):
             update_dict["name"] = duplicate_name(
                 cls.query,
                 name=update_dict["name"],
-                tenant_id=tenant_id
             )
         update_dict.update({
             "update_time": current_timestamp(),
@@ -163,7 +154,6 @@ class MemoryService(CommonService):
     def get_null_tenant_embd_id_row(cls):
         fields = [
             cls.model.id,
-            cls.model.tenant_id,
             cls.model.embd_id
         ]
         objs = cls.model.select(*fields).where(cls.model.tenant_embd_id.is_null())
@@ -174,7 +164,6 @@ class MemoryService(CommonService):
     def get_null_tenant_llm_id_row(cls):
         fields = [
             cls.model.id,
-            cls.model.tenant_id,
             cls.model.llm_id
         ]
         objs = cls.model.select(*fields).where(cls.model.tenant_llm_id.is_null())

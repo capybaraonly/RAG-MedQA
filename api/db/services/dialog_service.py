@@ -12,7 +12,7 @@ from timeit import default_timer as timer
 
 from peewee import fn
 from api.db.services.file_service import FileService
-from common.constants import LLMType, StatusEnum
+from common.constants import LLMType, StatusEnum, SYSTEM_TENANT_ID
 from api.db.db_models import DB, Dialog
 from api.db.services.common_service import CommonService
 from api.db.services.doc_metadata_service import DocMetadataService
@@ -79,15 +79,16 @@ class DialogService(CommonService):
             chats = chats.where(cls.model.id == id)
         if name:
             chats = chats.where(cls.model.name == name)
-        chats = chats.where((cls.model.tenant_id == tenant_id) & (cls.model.status == StatusEnum.VALID.value))
+        chats = chats.where(cls.model.status == StatusEnum.VALID.value)
         if desc:
             chats = chats.order_by(cls.model.getter_by(orderby).desc())
         else:
             chats = chats.order_by(cls.model.getter_by(orderby).asc())
 
+        total = chats.count()
         chats = chats.paginate(page_number, items_per_page)
 
-        return list(chats.dicts())
+        return list(chats.dicts()), total
 
     @classmethod
     @DB.connection_context()
@@ -103,11 +104,8 @@ class DialogService(CommonService):
         id=None,
         name=None,
     ):
-        from api.db.db_models import User
-
         fields = [
             cls.model.id,
-            cls.model.tenant_id,
             cls.model.name,
             cls.model.description,
             cls.model.language,
@@ -124,18 +122,12 @@ class DialogService(CommonService):
             cls.model.kb_ids,
             cls.model.icon,
             cls.model.status,
-            User.nickname,
-            User.avatar.alias("tenant_avatar"),
             cls.model.update_time,
             cls.model.create_time,
         ]
         dialogs = (
             cls.model.select(*fields)
-            .join(User, on=(cls.model.tenant_id == User.id))
-            .where(
-                (cls.model.tenant_id.in_(joined_tenant_ids) | (cls.model.tenant_id == user_id))
-                & (cls.model.status == StatusEnum.VALID.value),
-            )
+            .where(cls.model.status == StatusEnum.VALID.value)
         )
         if id:
             dialogs = dialogs.where(cls.model.id == id)
@@ -159,7 +151,7 @@ class DialogService(CommonService):
     @DB.connection_context()
     def get_all_dialogs_by_tenant_id(cls, tenant_id):
         fields = [cls.model.id]
-        dialogs = cls.model.select(*fields).where(cls.model.tenant_id == tenant_id)
+        dialogs = cls.model.select(*fields)
         dialogs.order_by(cls.model.create_time.asc())
         offset, limit = 0, 100
         res = []
@@ -177,7 +169,6 @@ class DialogService(CommonService):
     def get_null_tenant_llm_id_row(cls):
         fields = [
             cls.model.id,
-            cls.model.tenant_id,
             cls.model.llm_id
         ]
         objs = cls.model.select(*fields).where(cls.model.tenant_llm_id.is_null())
@@ -188,7 +179,6 @@ class DialogService(CommonService):
     def get_null_tenant_rerank_id_row(cls):
         fields = [
             cls.model.id,
-            cls.model.tenant_id,
             cls.model.rerank_id
         ]
         objs = cls.model.select(*fields).where(cls.model.tenant_rerank_id.is_null())
@@ -492,7 +482,7 @@ async def async_chat(dialog, messages, stream=True, **kwargs):
     # try to use sql if field mapping is good to go
     if field_map:
         logging.debug("Use SQL to retrieval:{}".format(questions[-1]))
-        ans = await use_sql(questions[-1], field_map, dialog.tenant_id, chat_mdl, prompt_config.get("quote", True), dialog.kb_ids)
+        ans = await use_sql(questions[-1], field_map, SYSTEM_TENANT_ID, chat_mdl, prompt_config.get("quote", True), dialog.kb_ids)
         # For aggregate queries (COUNT, SUM, etc.), chunks may be empty but answer is still valid
         if ans and (ans.get("reference", {}).get("chunks") or ans.get("answer")):
             yield ans

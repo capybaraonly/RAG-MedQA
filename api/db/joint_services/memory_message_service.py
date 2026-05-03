@@ -5,7 +5,7 @@ from typing import List
 
 from common import settings
 from common.time_utils import current_timestamp, timestamp_to_date, format_iso_8601_to_ymd_hms
-from common.constants import MemoryType, LLMType
+from common.constants import MemoryType, LLMType, SYSTEM_TENANT_ID
 from common.doc_store.doc_store_base import FusionExpr
 from common.misc_utils import get_uuid
 from api.db.db_utils import bulk_insert_into_db
@@ -37,7 +37,7 @@ async def save_to_memory(memory_id: str, message_dict: dict):
     if not memory:
         return False, f"Memory '{memory_id}' not found."
 
-    tenant_id = memory.tenant_id
+    tenant_id = SYSTEM_TENANT_ID
     extracted_content = await extract_by_llm(
         tenant_id,
         memory.tenant_llm_id,
@@ -92,7 +92,7 @@ async def save_extracted_to_memory_only(memory_id: str, message_dict, source_mes
             TaskService.update_progress(task_id, {"progress": 1.0, "progress_msg": timestamp_to_date(current_timestamp())+ " " + msg})
         return True, msg
 
-    tenant_id = memory.tenant_id
+    tenant_id = SYSTEM_TENANT_ID
     extracted_content = await extract_by_llm(
         tenant_id,
         memory.tenant_llm_id,
@@ -173,8 +173,8 @@ async def embed_and_save(memory, message_list: list[dict], task_id: str=None):
     if task_id:
         TaskService.update_progress(task_id, {"progress": 0.85, "progress_msg": timestamp_to_date(current_timestamp())+ " " + "Embedded extracted content."})
     vector_dimension = len(vector_list[0])
-    if not MessageService.has_index(memory.tenant_id, memory.id):
-        created = MessageService.create_index(memory.tenant_id, memory.id, vector_size=vector_dimension)
+    if not MessageService.has_index(SYSTEM_TENANT_ID, memory.id):
+        created = MessageService.create_index(SYSTEM_TENANT_ID, memory.id, vector_size=vector_dimension)
         if not created:
             error_msg = "Failed to create message index."
             if task_id:
@@ -182,20 +182,20 @@ async def embed_and_save(memory, message_list: list[dict], task_id: str=None):
             return False, error_msg
 
     new_msg_size = sum([MessageService.calculate_message_size(m) for m in message_list])
-    current_memory_size = get_memory_size_cache(memory.tenant_id, memory.id)
+    current_memory_size = get_memory_size_cache(SYSTEM_TENANT_ID, memory.id)
     if new_msg_size + current_memory_size > memory.memory_size:
         size_to_delete = current_memory_size + new_msg_size - memory.memory_size
         if memory.forgetting_policy == "FIFO":
-            message_ids_to_delete, delete_size = MessageService.pick_messages_to_delete_by_fifo(memory.id, memory.tenant_id,
+            message_ids_to_delete, delete_size = MessageService.pick_messages_to_delete_by_fifo(memory.id, SYSTEM_TENANT_ID,
                                                                                                 size_to_delete)
-            MessageService.delete_message({"message_id": message_ids_to_delete}, memory.tenant_id, memory.id)
+            MessageService.delete_message({"message_id": message_ids_to_delete}, SYSTEM_TENANT_ID, memory.id)
             decrease_memory_size_cache(memory.id, delete_size)
         else:
             error_msg = "Failed to insert message into memory. Memory size reached limit and cannot decide which to delete."
             if task_id:
                 TaskService.update_progress(task_id, {"progress": -1, "progress_msg": timestamp_to_date(current_timestamp())+ " " + error_msg})
             return False, error_msg
-    fail_cases = MessageService.insert_message(message_list, memory.tenant_id, memory.id)
+    fail_cases = MessageService.insert_message(message_list, SYSTEM_TENANT_ID, memory.id)
     if fail_cases:
         error_msg = "Failed to insert message into memory. Details: " + "; ".join(fail_cases)
         if task_id:
@@ -229,7 +229,7 @@ def query_message(filter_dict: dict, params: dict):
         return []
 
     condition_dict = {k: v for k, v in filter_dict.items() if v}
-    uids = [memory.tenant_id for memory in memory_list]
+    uids = [SYSTEM_TENANT_ID for memory in memory_list]
 
     question = params["query"]
     question = question.strip()
@@ -259,7 +259,7 @@ def init_message_id_sequence():
             REDIS_CONN.set(message_id_redis_key, max_id)
         else:
             max_id = MessageService.get_max_message_id(
-                uid_list=[m.tenant_id for m in exist_memory_list],
+                uid_list=[SYSTEM_TENANT_ID for m in exist_memory_list],
                 memory_ids=[m.id for m in exist_memory_list]
             )
             REDIS_CONN.set(message_id_redis_key, max_id)
@@ -301,7 +301,7 @@ def init_memory_size_cache():
         logging.info("No memory found, no need to init memory size.")
     else:
         for m in memory_list:
-            get_memory_size_cache(m.id, m.tenant_id)
+            get_memory_size_cache(m.id, SYSTEM_TENANT_ID)
         logging.info("Memory size cache init done.")
 
 
@@ -314,10 +314,10 @@ def fix_missing_tokenized_memory():
         logging.info("No memory found, no need to fix missing tokenized memory.")
     else:
         for m in memory_list:
-            message_list = MessageService.get_missing_field_messages(m.id, m.tenant_id, "tokenized_content_ltks")
+            message_list = MessageService.get_missing_field_messages(m.id, SYSTEM_TENANT_ID, "tokenized_content_ltks")
             for msg in message_list:
                 # update content to refresh tokenized field
-                MessageService.update_message({"message_id": msg["message_id"], "memory_id": m.id}, {"content": msg["content"]}, m.tenant_id, m.id)
+                MessageService.update_message({"message_id": msg["message_id"], "memory_id": m.id}, {"content": msg["content"]}, SYSTEM_TENANT_ID, m.id)
             if message_list:
                 logging.info(f"Fixed {len(message_list)} messages missing tokenized field in memory: {m.name}.")
         logging.info("Fix missing tokenized memory done.")

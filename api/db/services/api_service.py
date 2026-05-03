@@ -24,7 +24,7 @@ class APITokenService(CommonService):
     @classmethod
     @DB.connection_context()
     def delete_by_tenant_id(cls, tenant_id):
-        return cls.model.delete().where(cls.model.tenant_id == tenant_id).execute()
+        return cls.model.delete().execute()
 
 
 class API4ConversationService(CommonService):
@@ -99,7 +99,7 @@ class API4ConversationService(CommonService):
                 cls.model.round).alias("round"),
             peewee.fn.SUM(
                 cls.model.thumb_up).alias("thumb_up")
-        ).join(Dialog, on=((cls.model.dialog_id == Dialog.id) & (Dialog.tenant_id == tenant_id))).where(
+        ).join(Dialog, on=(cls.model.dialog_id == Dialog.id)).where(
             cls.model.create_date >= from_date,
             cls.model.create_date <= to_date,
             cls.model.source == source

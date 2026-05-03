@@ -114,7 +114,7 @@ def _load_user():
                 token = authorization.split()[1]
                 objs = APIToken.query(token=token)
                 if objs:
-                    user = UserService.query(id=objs[0].tenant_id, status=StatusEnum.VALID.value)
+                    user = UserService.query(id=objs[0].user_id, status=StatusEnum.VALID.value)
                     if user:
                         if not user[0].access_token or not user[0].access_token.strip():
                             logging.warning(f"User {user[0].email} has empty access_token in database")
@@ -122,7 +122,7 @@ def _load_user():
                         g.user = user[0]
                         return user[0]
                     else:
-                        logging.warning(f"load_user: No user found for tenant_id={objs[0].tenant_id} from APIToken")
+                        logging.warning(f"load_user: No user found for user_id={objs[0].user_id} from APIToken")
                 else:
                     logging.warning(f"load_user: No APIToken found for token={token[:10]}...")
         except Exception as e_api_token:

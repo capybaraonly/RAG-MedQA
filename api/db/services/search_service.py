@@ -44,18 +44,14 @@ class SearchService(CommonService):
         fields = [
             cls.model.id,
             cls.model.avatar,
-            cls.model.tenant_id,
             cls.model.name,
             cls.model.description,
             cls.model.created_by,
             cls.model.search_config,
             cls.model.update_time,
-            User.nickname,
-            User.avatar.alias("tenant_avatar"),
         ]
         search = (
             cls.model.select(*fields)
-            .join(User, on=((User.id == cls.model.tenant_id) & (User.status == StatusEnum.VALID.value)))
             .where((cls.model.id == search_id) & (cls.model.status == StatusEnum.VALID.value))
             .first()
             .to_dict()
@@ -70,21 +66,16 @@ class SearchService(CommonService):
         fields = [
             cls.model.id,
             cls.model.avatar,
-            cls.model.tenant_id,
             cls.model.name,
             cls.model.description,
             cls.model.created_by,
             cls.model.status,
             cls.model.update_time,
             cls.model.create_time,
-            User.nickname,
-            User.avatar.alias("tenant_avatar"),
         ]
         query = (
             cls.model.select(*fields)
-            .join(User, on=(cls.model.tenant_id == User.id))
-            .where(((cls.model.tenant_id.in_(joined_tenant_ids)) | (cls.model.tenant_id == user_id)) & (
-                        cls.model.status == StatusEnum.VALID.value))
+            .where(cls.model.status == StatusEnum.VALID.value)
         )
 
         if keywords:
@@ -104,4 +95,4 @@ class SearchService(CommonService):
     @classmethod
     @DB.connection_context()
     def delete_by_tenant_id(cls, tenant_id):
-        return cls.model.delete().where(cls.model.tenant_id == tenant_id).execute()
+        return cls.model.delete().execute()

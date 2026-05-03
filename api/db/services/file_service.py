@@ -19,7 +19,7 @@ from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from api.db.services.file2document_service import File2DocumentService
 from common.misc_utils import get_uuid
-from common.constants import TaskStatus, FileSource, ParserType
+from common.constants import TaskStatus, FileSource, ParserType, SYSTEM_TENANT_ID
 from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.db.services.task_service import TaskService
 from api.utils.file_utils import filename_type, read_potential_broken_pdf, thumbnail_img, sanitize_path
@@ -45,9 +45,9 @@ class FileService(CommonService):
         # Returns:
         #     Tuple of (file_list, total_count)
         if keywords:
-            files = cls.model.select().where((cls.model.tenant_id == tenant_id), (cls.model.parent_id == pf_id), (fn.LOWER(cls.model.name).contains(keywords.lower())), ~(cls.model.id == pf_id))
+            files = cls.model.select().where((cls.model.parent_id == pf_id), (fn.LOWER(cls.model.name).contains(keywords.lower())), ~(cls.model.id == pf_id))
         else:
-            files = cls.model.select().where((cls.model.tenant_id == tenant_id), (cls.model.parent_id == pf_id), ~(cls.model.id == pf_id))
+            files = cls.model.select().where((cls.model.parent_id == pf_id), ~(cls.model.id == pf_id))
         count = files.count()
         if desc:
             files = files.order_by(cls.model.getter_by(orderby).desc())
@@ -158,7 +158,7 @@ class FileService(CommonService):
     @DB.connection_context()
     def get_all_file_ids_by_tenant_id(cls, tenant_id):
         fields = [cls.model.id]
-        files = cls.model.select(*fields).where(cls.model.tenant_id == tenant_id)
+        files = cls.model.select(*fields)
         files.order_by(cls.model.create_time.asc())
         offset, limit = 0, 100
         res = []
@@ -187,7 +187,7 @@ class FileService(CommonService):
             return file
         else:
             file = cls.insert(
-                {"id": get_uuid(), "parent_id": parent_id, "tenant_id": current_user.id, "created_by": current_user.id, "name": name[count], "location": "", "size": 0, "type": FileType.FOLDER.value}
+                {"id": get_uuid(), "parent_id": parent_id, "tenant_id": SYSTEM_TENANT_ID, "created_by": current_user.id, "name": name[count], "location": "", "size": 0, "type": FileType.FOLDER.value}
             )
             return cls.create_folder(file, file.id, name, count + 1)
 
@@ -213,15 +213,15 @@ class FileService(CommonService):
         #     tenant_id: Tenant ID
         # Returns:
         #     Root folder dictionary
-        for file in cls.model.select().where((cls.model.tenant_id == tenant_id), (cls.model.parent_id == cls.model.id)):
+        for file in cls.model.select().where((cls.model.parent_id == cls.model.id)):
             return file.to_dict()
 
         file_id = get_uuid()
         file = {
             "id": file_id,
             "parent_id": file_id,
-            "tenant_id": tenant_id,
-            "created_by": tenant_id,
+            "tenant_id": SYSTEM_TENANT_ID,
+            "created_by": SYSTEM_TENANT_ID,
             "name": "/",
             "type": FileType.FOLDER.value,
             "size": 0,
@@ -240,7 +240,7 @@ class FileService(CommonService):
         #     Knowledge base folder dictionary
         root_folder = cls.get_root_folder(tenant_id)
         root_id = root_folder["id"]
-        kb_folder = cls.model.select().where((cls.model.tenant_id == tenant_id), (cls.model.parent_id == root_id), (cls.model.name == KNOWLEDGEBASE_FOLDER_NAME)).first()
+        kb_folder = cls.model.select().where((cls.model.parent_id == root_id), (cls.model.name == KNOWLEDGEBASE_FOLDER_NAME)).first()
         if not kb_folder:
             kb_folder = cls.new_a_file_from_kb(tenant_id, KNOWLEDGEBASE_FOLDER_NAME, root_id)
             return kb_folder
@@ -259,13 +259,13 @@ class FileService(CommonService):
         #     location: File location
         # Returns:
         #     Created file dictionary
-        for file in cls.query(tenant_id=tenant_id, parent_id=parent_id, name=name):
+        for file in cls.query(parent_id=parent_id, name=name):
             return file.to_dict()
         file = {
             "id": get_uuid(),
             "parent_id": parent_id,
-            "tenant_id": tenant_id,
-            "created_by": tenant_id,
+            "tenant_id": SYSTEM_TENANT_ID,
+            "created_by": SYSTEM_TENANT_ID,
             "name": name,
             "type": ty,
             "size": size,
@@ -286,7 +286,7 @@ class FileService(CommonService):
             return
         folder = cls.new_a_file_from_kb(tenant_id, KNOWLEDGEBASE_FOLDER_NAME, root_id)
 
-        for kb in Knowledgebase.select(*[Knowledgebase.id, Knowledgebase.name]).where(Knowledgebase.tenant_id == tenant_id):
+        for kb in Knowledgebase.select(*[Knowledgebase.id, Knowledgebase.name]):
             kb_folder = cls.new_a_file_from_kb(tenant_id, kb.name, folder["id"])
             for doc in DocumentService.query(kb_id=kb.id):
                 FileService.add_file_from_kb(doc.to_dict(), kb_folder["id"], tenant_id)
@@ -355,10 +355,10 @@ class FileService(CommonService):
     @DB.connection_context()
     def delete_folder_by_pf_id(cls, user_id, folder_id):
         try:
-            files = cls.model.select().where((cls.model.tenant_id == user_id) & (cls.model.parent_id == folder_id))
+            files = cls.model.select().where((cls.model.parent_id == folder_id))
             for file in files:
                 cls.delete_folder_by_pf_id(user_id, file.id)
-            return (cls.model.delete().where((cls.model.tenant_id == user_id) & (cls.model.id == folder_id)).execute(),)
+            return (cls.model.delete().where((cls.model.id == folder_id)).execute(),)
         except Exception:
             logging.exception("delete_folder_by_pf_id")
             raise RuntimeError("Database error (File retrieval)!")
@@ -392,8 +392,8 @@ class FileService(CommonService):
         file = {
             "id": get_uuid(),
             "parent_id": kb_folder_id,
-            "tenant_id": tenant_id,
-            "created_by": tenant_id,
+            "tenant_id": SYSTEM_TENANT_ID,
+            "created_by": SYSTEM_TENANT_ID,
             "name": doc["name"],
             "type": doc["type"],
             "size": doc["size"],
@@ -419,7 +419,7 @@ class FileService(CommonService):
         pf_id = root_folder["id"]
         self.init_knowledgebase_docs(pf_id, user_id)
         kb_root_folder = self.get_kb_folder(user_id)
-        kb_folder = self.new_a_file_from_kb(kb.tenant_id, kb.name, kb_root_folder["id"])
+        kb_folder = self.new_a_file_from_kb(SYSTEM_TENANT_ID, kb.name, kb_root_folder["id"])
 
         safe_parent_path = sanitize_path(parent_path)
 
@@ -443,7 +443,7 @@ class FileService(CommonService):
                     blob = file.read()
                     new_hash = xxhash.xxh128(blob).hexdigest()
                     old_hash = doc.content_hash or ""
-                    settings.STORAGE_IMPL.put(kb.id, doc.location, blob, kb.tenant_id)
+                    settings.STORAGE_IMPL.put(kb.id, doc.location, blob, SYSTEM_TENANT_ID)
                     doc.size = len(blob)
                     doc.content_hash = new_hash
                     doc = doc.to_dict()
@@ -455,7 +455,7 @@ class FileService(CommonService):
                     err.append(file.filename + ": " + str(exc))
                 continue
             try:
-                DocumentService.check_doc_health(kb.tenant_id, file.filename)
+                DocumentService.check_doc_health(SYSTEM_TENANT_ID, file.filename)
                 filename = duplicate_name(DocumentService.query, name=file.filename, kb_id=kb.id)
                 filetype = filename_type(filename)
                 if filetype == FileType.OTHER.value:
@@ -495,7 +495,7 @@ class FileService(CommonService):
                 }
                 DocumentService.insert(doc)
 
-                FileService.add_file_from_kb(doc, kb_folder["id"], kb.tenant_id)
+                FileService.add_file_from_kb(doc, kb_folder["id"], SYSTEM_TENANT_ID)
                 files.append((doc, blob))
             except Exception as e:
                 err.append(file.filename + ": " + str(e))

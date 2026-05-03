@@ -9,7 +9,7 @@
 4. 验证 ES 中确实写入了文档
 
 用法:
-  python scripts/smoke_test.py --tenant-id <id>
+  python scripts/smoke_test.py
 
 如果本地嵌入服务已在运行（另一个终端 python scripts/mini_emb_server.py），
 可以加 --skip-server 跳过启动步骤。
@@ -25,6 +25,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from common.constants import SYSTEM_TENANT_ID
+
 
 def wait_for_server(url: str, timeout: int = 60):
     import urllib.request
@@ -38,7 +40,7 @@ def wait_for_server(url: str, timeout: int = 60):
     return False
 
 
-def register_embedding_model(tenant_id: str):
+def register_embedding_model():
     """DB 中注册 xxxx 工厂的 bge-m3 embedding（幂等）。"""
     from common.settings import init_settings
     init_settings()
@@ -48,12 +50,10 @@ def register_embedding_model(tenant_id: str):
     factory_name = "xxxx"
     model_name = "bge-m3@xxxx"
 
-    # 确保 LLMFactories 有 xxxx
     if not LLMFactories.get_or_none(LLMFactories.name == factory_name):
         LLMFactories.create(name=factory_name, logo="", tags="Embedding", status="1")
         print(f"  已添加 factory: {factory_name}")
 
-    # 确保 LLM 表有 bge-m3@xxxx embedding 条目
     if not LLM.get_or_none(LLM.fid == factory_name, LLM.llm_name == model_name):
         LLM.create(
             fid=factory_name,
@@ -65,14 +65,13 @@ def register_embedding_model(tenant_id: str):
         )
         print(f"  已添加 LLM: {model_name}")
 
-    # 确保 TenantLLM 有该 tenant 的 embedding 配置
     if not TenantLLM.get_or_none(
-        TenantLLM.tenant_id == tenant_id,
+        TenantLLM.tenant_id == SYSTEM_TENANT_ID,
         TenantLLM.llm_name == model_name,
         TenantLLM.model_type == "embedding",
     ):
         TenantLLM.create(
-            tenant_id=tenant_id,
+            tenant_id=SYSTEM_TENANT_ID,
             llm_factory=factory_name,
             llm_name=model_name,
             model_type="embedding",
@@ -81,21 +80,20 @@ def register_embedding_model(tenant_id: str):
             max_tokens=8096,
             used_tokens=0,
         )
-        print(f"  已为 tenant {tenant_id[:8]}... 注册 embedding 模型")
+        print(f"  已注册 embedding 模型")
     else:
         print(f"  embedding 模型已注册，跳过")
 
 
-def verify_indexed(tenant_id: str, kb_id: str, min_docs: int = 50):
+def verify_indexed(kb_id: str, min_docs: int = 50):
     """验证 ES 中写入的文档数量。"""
     from common.settings import init_settings
     init_settings()
     from common import settings
     from rag.nlp.search import index_name
 
-    idx = index_name(tenant_id)
+    idx = index_name()
     try:
-        # Simple count query
         count = settings.docStoreConn.count({"kb_id": kb_id}, idx, [kb_id])
         print(f"\n  ES 文档数量: {count} (kb_id={kb_id[:8]}...)")
         assert count >= min_docs, f"期望 >= {min_docs} 条，实际 {count} 条"
@@ -108,7 +106,6 @@ def verify_indexed(tenant_id: str, kb_id: str, min_docs: int = 50):
 
 def main():
     ap = argparse.ArgumentParser(description="知识库入库冒烟测试")
-    ap.add_argument("--tenant-id", required=True, help="租户 ID")
     ap.add_argument("--skip-server", action="store_true",
                     help="跳过启动本地嵌入服务（已在外部运行时使用）")
     ap.add_argument("--qa-limit", type=int, default=100)
@@ -134,14 +131,13 @@ def main():
 
         # ── 2. 注册 embedding 模型 ────────────────────────────────────
         print("\n>>> 注册 embedding 模型…")
-        register_embedding_model(args.tenant_id)
+        register_embedding_model()
 
         # ── 3. 运行入库脚本 ───────────────────────────────────────────
         print(f"\n>>> 运行入库脚本（--qa-limit {args.qa_limit}）…")
         cmd = [
             sys.executable,
             str(PROJECT_ROOT / "scripts" / "build_medical_kb.py"),
-            "--tenant-id", args.tenant_id,
             "--qa-limit", str(args.qa_limit),
             "--batch-size", "16",
         ]
@@ -153,7 +149,7 @@ def main():
         # ── 4. 读取生成的 kb_id 并验证 ────────────────────────────────
         print("\n>>> 验证 ES 写入…")
         ckpt_dir = PROJECT_ROOT / "data" / ".checkpoints"
-        ckpt_files = list(ckpt_dir.glob(f"global_{args.tenant_id}_*.json"))
+        ckpt_files = list(ckpt_dir.glob("global_*.json"))
         if not ckpt_files:
             print("  警告：找不到全局 checkpoint，跳过 ES 验证")
         else:
@@ -161,7 +157,7 @@ def main():
             ckpt = json.loads(ckpt_files[0].read_text())
             kb_id = ckpt.get("kb_id", "")
             if kb_id:
-                verify_indexed(args.tenant_id, kb_id, min_docs=args.qa_limit // 2)
+                verify_indexed(kb_id, min_docs=args.qa_limit // 2)
             else:
                 print("  警告：checkpoint 中无 kb_id")
 

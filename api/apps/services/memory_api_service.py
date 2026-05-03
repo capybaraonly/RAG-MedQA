@@ -24,7 +24,7 @@ from api.utils.memory_utils import format_ret_data_from_memory, get_memory_type_
 from api.constants import MEMORY_NAME_LIMIT, MEMORY_SIZE_LIMIT
 from memory.services.messages import MessageService
 from memory.utils.prompt_util import PromptAssembler
-from common.constants import MemoryType, ForgettingPolicy
+from common.constants import MemoryType, ForgettingPolicy, SYSTEM_TENANT_ID
 from common.exceptions import ArgumentException, NotFoundException
 from common.time_utils import current_timestamp, timestamp_to_date
 
@@ -56,7 +56,7 @@ async def create_memory(memory_info: dict):
         raise ArgumentException(f"Memory type '{invalid_type}' is not supported.")
     memory_type = list(memory_type)
     success, res = MemoryService.create_memory(
-        tenant_id=current_user.id,
+        tenant_id=SYSTEM_TENANT_ID,
         name=memory_name,
         memory_type=memory_type,
         embd_id=memory_info["embd_id"],
@@ -153,7 +153,7 @@ async def update_memory(memory_id: str, new_memory_setting: dict):
     if not to_update:
         return True, memory_dict
     # check memory empty when update embd_id, memory_type
-    memory_size = get_memory_size_cache(memory_id, current_memory.tenant_id)
+    memory_size = get_memory_size_cache(memory_id, SYSTEM_TENANT_ID)
     not_allowed_update = [f for f in ["tenant_embd_id", "embd_id", "memory_type"] if f in to_update and memory_size > 0]
     if not_allowed_update:
         raise ArgumentException(f"Can't update {not_allowed_update} when memory isn't empty.")
@@ -162,7 +162,7 @@ async def update_memory(memory_id: str, new_memory_setting: dict):
             # update old default prompt, assemble a new one
             to_update["system_prompt"] = PromptAssembler.assemble_system_prompt({"memory_type": to_update["memory_type"]})
 
-    MemoryService.update_memory(current_memory.tenant_id, memory_id, to_update)
+    MemoryService.update_memory(SYSTEM_TENANT_ID, memory_id, to_update)
     updated_memory = MemoryService.get_by_memory_id(memory_id)
     return True, format_ret_data_from_memory(updated_memory)
 
@@ -172,8 +172,8 @@ async def delete_memory(memory_id):
     if not memory:
         raise NotFoundException(f"Memory '{memory_id}' not found.")
     MemoryService.delete_memory(memory_id)
-    if MessageService.has_index(memory.tenant_id, memory_id):
-        MessageService.delete_message({"memory_id": memory_id}, memory.tenant_id, memory_id)
+    if MessageService.has_index(SYSTEM_TENANT_ID, memory_id):
+        MessageService.delete_message({"memory_id": memory_id}, SYSTEM_TENANT_ID, memory_id)
     return True
 
 
@@ -189,15 +189,6 @@ async def list_memory(filter_params: dict, keywords: str, page: int=1, page_size
     :param page_size: int
     """
     filter_dict: dict = {"storage_type": filter_params.get("storage_type")}
-    tenant_ids = filter_params.get("tenant_id")
-    if not filter_params.get("tenant_id"):
-        # restrict to current user's tenants
-        user_tenants = UserTenantService.get_user_tenant_relation_by_user_id(current_user.id)
-        filter_dict["tenant_id"] = [tenant["tenant_id"] for tenant in user_tenants]
-    else:
-        if len(tenant_ids) == 1 and ',' in tenant_ids[0]:
-            tenant_ids = tenant_ids[0].split(',')
-        filter_dict["tenant_id"] = tenant_ids
     memory_types = filter_params.get("memory_type")
     if memory_types and len(memory_types) == 1 and ',' in memory_types[0]:
         memory_types = memory_types[0].split(',')
@@ -222,7 +213,7 @@ async def get_memory_messages(memory_id, agent_ids: list[str], keywords: str, pa
     if not memory:
         raise NotFoundException(f"Memory '{memory_id}' not found.")
     messages = MessageService.list_message(
-        memory.tenant_id, memory_id, agent_ids, keywords, page, page_size)
+        SYSTEM_TENANT_ID, memory_id, agent_ids, keywords, page, page_size)
     agent_name_mapping = {}
     extract_task_mapping = {}
     if messages["message_list"]:
@@ -265,7 +256,7 @@ async def forget_message(memory_id: str, message_id: int):
     update_succeed = MessageService.update_message(
         {"memory_id": memory_id, "message_id": int(message_id)},
         {"forget_at": forget_time},
-        memory.tenant_id, memory_id)
+        SYSTEM_TENANT_ID, memory_id)
     if update_succeed:
         return True
     raise Exception(f"Failed to forget message '{message_id}' in memory '{memory_id}'.")
@@ -279,7 +270,7 @@ async def update_message_status(memory_id: str, message_id: int, status: bool):
     update_succeed = MessageService.update_message(
         {"memory_id": memory_id, "message_id": int(message_id)},
         {"status": status},
-        memory.tenant_id, memory_id)
+        SYSTEM_TENANT_ID, memory_id)
     if update_succeed:
         return True
     raise Exception(f"Failed to set status for message '{message_id}' in memory '{memory_id}'.")
@@ -314,7 +305,7 @@ async def get_messages(memory_ids: list[str], agent_id: str = "", session_id: st
     :return: list of recent messages
     """
     memory_list = MemoryService.get_by_ids(memory_ids)
-    uids = [memory.tenant_id for memory in memory_list]
+    uids = [SYSTEM_TENANT_ID for memory in memory_list]
     res = MessageService.get_recent_messages(
         uids,
         memory_ids,
@@ -338,7 +329,7 @@ async def get_message_content(memory_id: str, message_id: int):
     if not memory:
         raise NotFoundException(f"Memory '{memory_id}' not found.")
 
-    res = MessageService.get_by_message_id(memory_id, message_id, memory.tenant_id)
+    res = MessageService.get_by_message_id(memory_id, message_id, SYSTEM_TENANT_ID)
     if res:
         return res
     raise NotFoundException(f"Message '{message_id}' in memory '{memory_id}' not found.")

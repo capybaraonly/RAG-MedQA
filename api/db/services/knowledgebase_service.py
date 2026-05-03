@@ -8,9 +8,9 @@ from api.db.db_models import DB, Document, Knowledgebase, User, UserCanvas
 from api.db.services.common_service import CommonService
 from common.time_utils import current_timestamp, datetime_format
 from api.db.services import duplicate_name
-from api.db.services.user_service import TenantService
+
 from common.misc_utils import get_uuid
-from common.constants import StatusEnum
+from common.constants import StatusEnum, SYSTEM_TENANT_ID
 from api.constants import DATASET_NAME_LIMIT
 from api.utils.api_utils import get_parser_config, get_data_error_result
 
@@ -142,31 +142,22 @@ class KnowledgebaseService(CommonService):
             cls.model.name,
             cls.model.language,
             cls.model.description,
-            cls.model.tenant_id,
             cls.model.permission,
             cls.model.doc_num,
             cls.model.token_num,
             cls.model.chunk_num,
             cls.model.parser_id,
             cls.model.embd_id,
-            User.nickname,
-            User.avatar.alias('tenant_avatar'),
             cls.model.update_time
         ]
         if keywords:
-            kbs = cls.model.select(*fields).join(User, on=(cls.model.tenant_id == User.id)).where(
-                ((cls.model.tenant_id.in_(joined_tenant_ids) & (cls.model.permission ==
-                                                                TenantPermission.TEAM.value)) | (
-                    cls.model.tenant_id == user_id))
-                & (cls.model.status == StatusEnum.VALID.value),
-                (fn.LOWER(cls.model.name).contains(keywords.lower()))
+            kbs = cls.model.select(*fields).where(
+                (cls.model.status == StatusEnum.VALID.value)
+                & (fn.LOWER(cls.model.name).contains(keywords.lower()))
             )
         else:
-            kbs = cls.model.select(*fields).join(User, on=(cls.model.tenant_id == User.id)).where(
-                ((cls.model.tenant_id.in_(joined_tenant_ids) & (cls.model.permission ==
-                                                                TenantPermission.TEAM.value)) | (
-                    cls.model.tenant_id == user_id))
-                & (cls.model.status == StatusEnum.VALID.value)
+            kbs = cls.model.select(*fields).where(
+                cls.model.status == StatusEnum.VALID.value
             )
         if parser_id:
             kbs = kbs.where(cls.model.parser_id == parser_id)
@@ -198,12 +189,7 @@ class KnowledgebaseService(CommonService):
             cls.model.create_date,
             cls.model.update_date
         ]
-        # find team kb and owned kb
-        kbs = cls.model.select(*fields).where(
-            (cls.model.tenant_id.in_(tenant_ids) & (cls.model.permission ==TenantPermission.TEAM.value)) | (
-                cls.model.tenant_id == user_id
-            )
-        )
+        kbs = cls.model.select(*fields).where(cls.model.status == StatusEnum.VALID.value)
         # sort by create_time asc
         kbs.order_by(cls.model.create_time.asc())
         # maybe cause slow query by deep paginate, optimize later.
@@ -229,7 +215,7 @@ class KnowledgebaseService(CommonService):
         fields = [
             cls.model.id,
         ]
-        kbs = cls.model.select(*fields).where(cls.model.tenant_id == tenant_id)
+        kbs = cls.model.select(*fields)
         kb_ids = [kb.id for kb in kbs]
         return kb_ids
 
@@ -341,7 +327,6 @@ class KnowledgebaseService(CommonService):
         #     Tuple of (exists, knowledge_base)
         kb = cls.model.select().where(
             (cls.model.name == kb_name)
-            & (cls.model.tenant_id == tenant_id)
             & (cls.model.status == StatusEnum.VALID.value)
         )
         if kb:
@@ -385,28 +370,21 @@ class KnowledgebaseService(CommonService):
         if len(dataset_name.encode("utf-8")) > DATASET_NAME_LIMIT:
             return False, get_data_error_result(message=f"Dataset name length is {len(dataset_name)} which is large than {DATASET_NAME_LIMIT}")
 
-        # Deduplicate name within tenant
+        # Deduplicate name
         dataset_name = duplicate_name(
             cls.query,
             name=dataset_name,
-            tenant_id=tenant_id,
             status=StatusEnum.VALID.value,
         )
-
-        # Verify tenant exists
-        ok, _t = TenantService.get_by_id(tenant_id)
-        if not ok:
-            return False, get_data_error_result(message="Tenant not found.")
 
         # Build payload
         kb_id = get_uuid()
         payload = {
             "id": kb_id,
             "name": dataset_name,
-            "tenant_id": tenant_id,
-            "created_by": tenant_id,
+            "created_by": SYSTEM_TENANT_ID,
             "parser_id": (parser_id or "naive"),
-            **kwargs # Includes optional fields such as description, language, permission, avatar, parser_config, etc.
+            **kwargs
         }
 
         # Update parser_config (always override with validated default/merged config)
@@ -446,10 +424,7 @@ class KnowledgebaseService(CommonService):
             kbs = kbs.where(cls.model.parser_id == parser_id)
 
         kbs = kbs.where(
-            ((cls.model.tenant_id.in_(joined_tenant_ids) & (cls.model.permission ==
-                                                            TenantPermission.TEAM.value)) | (
-                cls.model.tenant_id == user_id))
-            & (cls.model.status == StatusEnum.VALID.value)
+            cls.model.status == StatusEnum.VALID.value
         )
 
         if desc:
@@ -472,8 +447,7 @@ class KnowledgebaseService(CommonService):
         # Returns:
         #     Boolean indicating accessibility
         docs = cls.model.select(
-            cls.model.id).join(UserTenant, on=(UserTenant.tenant_id == Knowledgebase.tenant_id)
-                               ).where(cls.model.id == kb_id, UserTenant.user_id == user_id).paginate(0, 1)
+            cls.model.id).where(cls.model.id == kb_id).paginate(0, 1)
         docs = docs.dicts()
         if not docs:
             return False
@@ -488,8 +462,7 @@ class KnowledgebaseService(CommonService):
         #     user_id: User ID
         # Returns:
         #     List containing dataset information
-        kbs = cls.model.select().join(UserTenant, on=(UserTenant.tenant_id == Knowledgebase.tenant_id)
-                                      ).where(cls.model.id == kb_id, UserTenant.user_id == user_id).paginate(0, 1)
+        kbs = cls.model.select().where(cls.model.id == kb_id).paginate(0, 1)
         kbs = kbs.dicts()
         return list(kbs)
 
@@ -502,8 +475,7 @@ class KnowledgebaseService(CommonService):
         #     user_id: User ID
         # Returns:
         #     List containing dataset information
-        kbs = cls.model.select().join(UserTenant, on=(UserTenant.tenant_id == Knowledgebase.tenant_id)
-                                      ).where(cls.model.name == kb_name, UserTenant.user_id == user_id).paginate(0, 1)
+        kbs = cls.model.select().where(cls.model.name == kb_name).paginate(0, 1)
         kbs = kbs.dicts()
         return list(kbs)
 
@@ -563,7 +535,6 @@ class KnowledgebaseService(CommonService):
     def get_null_tenant_embd_id_row(cls):
         fields = [
             cls.model.id,
-            cls.model.tenant_id,
             cls.model.embd_id
         ]
         objs = cls.model.select(*fields).where(cls.model.tenant_embd_id.is_null())

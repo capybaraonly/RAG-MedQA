@@ -255,12 +255,12 @@ async def cross_languages(llm_id, query, languages=[]):
     from api.db.joint_services.tenant_model_service import get_model_config_by_type_and_name, get_tenant_default_model_by_type
 
     if llm_id and TenantLLMService.llm_id2llm_type(llm_id) == "image2text":
-        chat_model_config = get_model_config_by_type_and_name(tenant_id, LLMType.IMAGE2TEXT, llm_id)
+        chat_model_config = get_model_config_by_type_and_name(LLMType.IMAGE2TEXT, llm_id)
     else:
         if not llm_id:
             chat_model_config = get_tenant_default_model_by_type(LLMType.CHAT)
         else:
-            chat_model_config = get_model_config_by_type_and_name(tenant_id, LLMType.CHAT, llm_id)
+            chat_model_config = get_model_config_by_type_and_name(LLMType.CHAT, llm_id)
     chat_mdl = LLMBundle(chat_model_config)
     rendered_sys_prompt = PROMPT_JINJA_ENV.from_string(CROSS_LANGUAGES_SYS_PROMPT_TEMPLATE).render()
     rendered_user_prompt = PROMPT_JINJA_ENV.from_string(CROSS_LANGUAGES_USER_PROMPT_TEMPLATE).render(query=query,

@@ -17,6 +17,7 @@ from api.db.db_models import DB, Document
 from common import settings
 from common.metadata_utils import dedupe_list
 from api.db.db_models import Knowledgebase
+from common.constants import SYSTEM_TENANT_ID
 from common.doc_store.doc_store_base import OrderByExpr
 
 
@@ -160,7 +161,7 @@ class DocMetadataService:
         if not kb:
             return []
 
-        tenant_id = kb.tenant_id
+        tenant_id = SYSTEM_TENANT_ID
         index_name = cls._get_doc_meta_index_name()
 
         # Check if metadata index exists, create if it doesn't
@@ -315,7 +316,7 @@ class DocMetadataService:
         """
         try:
             # Get document with tenant_id (need to join with Knowledgebase)
-            doc_query = Document.select(Document, Knowledgebase.tenant_id).join(
+            doc_query = Document.select(Document).join(
                 Knowledgebase, on=(Knowledgebase.id == Document.kb_id)
             ).where(Document.id == doc_id)
 
@@ -326,7 +327,7 @@ class DocMetadataService:
 
             # Extract document fields
             doc_obj = doc  # This is the Document object
-            tenant_id = doc.knowledgebase.tenant_id  # Get tenant_id from joined Knowledgebase
+            tenant_id = SYSTEM_TENANT_ID
             kb_id = doc_obj.kb_id
 
             # Prepare metadata document
@@ -405,7 +406,7 @@ class DocMetadataService:
         """
         try:
             # Get document with tenant_id
-            doc_query = Document.select(Document, Knowledgebase.tenant_id).join(
+            doc_query = Document.select(Document).join(
                 Knowledgebase, on=(Knowledgebase.id == Document.kb_id)
             ).where(Document.id == doc_id)
 
@@ -416,7 +417,7 @@ class DocMetadataService:
 
             # Extract fields
             doc_obj = doc
-            tenant_id = doc.knowledgebase.tenant_id
+            tenant_id = SYSTEM_TENANT_ID
             kb_id = doc_obj.kb_id
             index_name = cls._get_doc_meta_index_name()
 
@@ -496,7 +497,7 @@ class DocMetadataService:
                 if not kb:
                     logging.warning(f"Knowledgebase {kb_id} not found for metadata deletion")
                     return False
-                tenant_id = kb.tenant_id
+                tenant_id = SYSTEM_TENANT_ID
 
             index_name = cls._get_doc_meta_index_name()
             logging.debug(f"[delete_document_metadata] Deleting doc_id: {doc_id}, kb_id: {kb_id}, index: {index_name}")
@@ -640,7 +641,7 @@ class DocMetadataService:
         """
         try:
             # Get document with tenant_id
-            doc_query = Document.select(Document, Knowledgebase.tenant_id).join(
+            doc_query = Document.select(Document).join(
                 Knowledgebase, on=(Knowledgebase.id == Document.kb_id)
             ).where(Document.id == doc_id)
 
@@ -651,7 +652,7 @@ class DocMetadataService:
 
             # Extract fields
             doc_obj = doc
-            tenant_id = doc.knowledgebase.tenant_id
+            tenant_id = SYSTEM_TENANT_ID
             kb_id = doc_obj.kb_id
             index_name = cls._get_doc_meta_index_name()
 
@@ -696,7 +697,7 @@ class DocMetadataService:
             if not kb:
                 return {}
 
-            tenant_id = kb.tenant_id
+            tenant_id = SYSTEM_TENANT_ID
             index_name = cls._get_doc_meta_index_name()
 
             condition = {"kb_id": kb_ids}

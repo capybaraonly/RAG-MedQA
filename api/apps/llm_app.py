@@ -131,7 +131,7 @@ async def set_api_key():
 
     for llm in source_llms:
         llm_config["max_tokens"] = llm.max_tokens
-        if not TenantLLMService.filter_update([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == factory, TenantLLM.llm_name == llm.llm_name], llm_config):
+        if not TenantLLMService.filter_update([], llm_config):
             TenantLLMService.save(
                 tenant_id=SYSTEM_TENANT_ID,
                 llm_factory=factory,
@@ -340,8 +340,8 @@ async def add_llm():
     if msg:
         return get_data_error_result(message=msg)
 
-    if not TenantLLMService.filter_update([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == factory, TenantLLM.llm_name == llm["llm_name"]], llm):
-        TenantLLMService.save(**llm)
+    TenantLLMService.filter_update([], llm)
+    TenantLLMService.save(**llm)
 
     return get_json_result(data=True)
 
@@ -352,7 +352,7 @@ async def add_llm():
 @validate_request("llm_factory", "llm_name")
 async def delete_llm():
     req = await get_request_json()
-    TenantLLMService.filter_delete([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == req["llm_factory"], TenantLLM.llm_name == req["llm_name"]])
+    TenantLLMService.filter_delete([])
     return get_json_result(data=True)
 
 
@@ -363,7 +363,7 @@ async def delete_llm():
 async def enable_llm():
     req = await get_request_json()
     TenantLLMService.filter_update(
-        [TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == req["llm_factory"], TenantLLM.llm_name == req["llm_name"]], {"status": str(req.get("status", "1"))}
+        [], {"status": str(req.get("status", "1"))}
     )
     return get_json_result(data=True)
 
@@ -374,7 +374,7 @@ async def enable_llm():
 @validate_request("llm_factory")
 async def delete_factory():
     req = await get_request_json()
-    TenantLLMService.filter_delete([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == req["llm_factory"]])
+    TenantLLMService.filter_delete([])
     return get_json_result(data=True)
 
 
@@ -440,7 +440,7 @@ async def list_app():
         llms = LLMService.get_all()
         llms = [m.to_dict() for m in llms if m.status == StatusEnum.VALID.value and m.fid not in weighted and (m.fid == "Builtin" or (m.llm_name + "@" + m.fid) in status)]
         for m in llms:
-            m["id"] = tenant_llm_mapping.get(m["llm_name"] + "@" + m["fid"], TenantLLM(id=None)).id
+            m["id"] = tenant_llm_mapping.get(m["llm_name"] + "@" + m["fid"], type('Stub', (), {'id': None})()).id
             m["available"] = m["fid"] in facts or m["llm_name"].lower() == "flag-embedding" or m["fid"] in self_deployed
             if "tei-" in os.getenv("COMPOSE_PROFILES", "") and m["model_type"] == LLMType.EMBEDDING and m["fid"] == "Builtin" and m["llm_name"] == os.getenv("TEI_MODEL", ""):
                 m["available"] = True

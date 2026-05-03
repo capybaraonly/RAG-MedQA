@@ -21,7 +21,7 @@ from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.db.services.doc_metadata_service import DocMetadataService
 from common.misc_utils import get_uuid
 from common.time_utils import current_timestamp, get_format_time
-from common.constants import LLMType, ParserType, StatusEnum, TaskStatus, SVR_CONSUMER_GROUP_NAME
+from common.constants import LLMType, ParserType, StatusEnum, TaskStatus, SVR_CONSUMER_GROUP_NAME, SYSTEM_TENANT_ID
 from rag.nlp import rag_tokenizer, search
 from rag.utils.redis_conn import REDIS_CONN
 from common.doc_store.doc_store_base import OrderByExpr
@@ -381,7 +381,7 @@ class DocumentService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_all_docs_by_creator_id(cls, creator_id):
-        fields = [cls.model.id, cls.model.kb_id, cls.model.token_num, cls.model.chunk_num, Knowledgebase.tenant_id]
+        fields = [cls.model.id, cls.model.kb_id, cls.model.token_num, cls.model.chunk_num, ]
         docs = cls.model.select(*fields).join(Knowledgebase, on=(Knowledgebase.id == cls.model.kb_id)).where(cls.model.created_by == creator_id)
         docs.order_by(cls.model.create_time.asc())
         # maybe cause slow query by deep paginate, optimize later
@@ -503,8 +503,7 @@ class DocumentService(CommonService):
             cls.model.type,
             cls.model.location,
             cls.model.size,
-            Knowledgebase.tenant_id,
-            Knowledgebase.embd_id,
+                        Knowledgebase.embd_id,
             Knowledgebase.img2txt_id,
             Knowledgebase.asr_id,
             cls.model.update_time,
@@ -635,11 +634,7 @@ class DocumentService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_tenant_id(cls, doc_id):
-        docs = cls.model.select(Knowledgebase.tenant_id).join(Knowledgebase, on=(Knowledgebase.id == cls.model.kb_id)).where(cls.model.id == doc_id, Knowledgebase.status == StatusEnum.VALID.value)
-        docs = docs.dicts()
-        if not docs:
-            return None
-        return docs[0]["tenant_id"]
+        return SYSTEM_TENANT_ID
 
     @classmethod
     @DB.connection_context()
@@ -653,11 +648,7 @@ class DocumentService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_tenant_id_by_name(cls, name):
-        docs = cls.model.select(Knowledgebase.tenant_id).join(Knowledgebase, on=(Knowledgebase.id == cls.model.kb_id)).where(cls.model.name == name, Knowledgebase.status == StatusEnum.VALID.value)
-        docs = docs.dicts()
-        if not docs:
-            return None
-        return docs[0]["tenant_id"]
+        return SYSTEM_TENANT_ID
 
     @classmethod
     @DB.connection_context()
@@ -720,8 +711,7 @@ class DocumentService(CommonService):
                 cls.model.content_hash,
                 Knowledgebase.language,
                 Knowledgebase.embd_id,
-                Knowledgebase.tenant_id,
-            )
+                            )
             .join(Knowledgebase, on=(cls.model.kb_id == Knowledgebase.id))
             .where(cls.model.id == doc_id)
         )
@@ -782,7 +772,7 @@ class DocumentService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_doc_count(cls, tenant_id):
-        docs = cls.model.select(cls.model.id).join(Knowledgebase, on=(Knowledgebase.id == cls.model.kb_id)).where(Knowledgebase.tenant_id == tenant_id)
+        docs = cls.model.select(cls.model.id)
         return len(docs)
 
     @classmethod
@@ -1049,7 +1039,7 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     for d, blob in files:
         doc_nm[d["id"]] = d["name"]
     for d, blob in files:
-        kwargs = {"callback": dummy, "parser_config": parser_config, "from_page": 0, "to_page": 100000, "tenant_id": kb.tenant_id, "lang": kb.language}
+        kwargs = {"callback": dummy, "parser_config": parser_config, "from_page": 0, "to_page": 100000, "tenant_id": SYSTEM_TENANT_ID, "lang": kb.language}
         threads.append(exe.submit(FACTORY.get(d["parser_id"], naive).chunk, d["name"], blob, **kwargs))
 
     for (docinfo, _), th in zip(files, threads):

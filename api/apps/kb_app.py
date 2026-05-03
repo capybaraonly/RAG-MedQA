@@ -44,8 +44,7 @@ async def create():
     create_dict = req
     e, res = KnowledgebaseService.create_with_name(
         name = create_dict.pop("name", None),
-        tenant_id = current_user.id,
-        parser_id = create_dict.pop("parser_id", None),
+                parser_id = create_dict.pop("parser_id", None),
         **create_dict
     )
 
@@ -110,8 +109,7 @@ async def update():
         if e and update_dict["name"].lower() != kb.name.lower():
             FileService.filter_update(
                 [
-                    File.tenant_id == kb.tenant_id,
-                    File.source_type == FileSource.KNOWLEDGEBASE,
+                                        File.source_type == FileSource.KNOWLEDGEBASE,
                     File.type == "folder",
                     File.name == kb.name,
                 ],
@@ -124,7 +122,7 @@ async def update():
 
         if update_dict["name"].lower() != kb.name.lower() \
                 and len(
-            KnowledgebaseService.query(name=update_dict["name"], tenant_id=current_user.id, status=StatusEnum.VALID.value)) >= 1:
+            KnowledgebaseService.query(name=update_dict["name"], status=StatusEnum.VALID.value)) >= 1:
             return get_data_error_result(
                 message="Duplicated dataset name.")
 
@@ -263,7 +261,7 @@ async def rm():
 
         def _rm_sync():
             for doc in DocumentService.query(kb_id=req["kb_id"]):
-                if not DocumentService.remove_document(doc, kbs[0].tenant_id):
+                if not DocumentService.remove_document(doc, SYSTEM_TENANT_ID):
                     return get_data_error_result(
                         message="Database error (Document removal)!")
                 f2d = File2DocumentService.get_by_document_id(doc.id)
@@ -272,8 +270,7 @@ async def rm():
                 File2DocumentService.delete_by_document_id(doc.id)
             FileService.filter_delete(
                 [
-                    File.tenant_id == kbs[0].tenant_id,
-                    File.source_type == FileSource.KNOWLEDGEBASE,
+                                        File.source_type == FileSource.KNOWLEDGEBASE,
                     File.type == "folder",
                     File.name == kbs[0].name,
                 ]
@@ -924,7 +921,7 @@ async def check_embedding():
     embd_id = req.get("embd_id", "")
     n = int(req.get("check_num", 5))
     _, kb = KnowledgebaseService.get_by_id(kb_id)
-    tenant_id = kb.tenant_id if kb.tenant_id else SYSTEM_TENANT_ID
+    tenant_id = SYSTEM_TENANT_ID
     if tenant_embd_id:
         embd_model_config = get_model_config_by_id(tenant_embd_id)
     elif embd_id:

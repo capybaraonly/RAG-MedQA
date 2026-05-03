@@ -892,6 +892,8 @@ class Dialog(DataBaseModel):
     icon = TextField(null=True, help_text="icon base64 string")
     language = CharField(max_length=32, null=True, default="Chinese" if "zh_CN" in os.getenv("LANG", "") else "English", help_text="English|Chinese", index=True)
     llm_id = CharField(max_length=128, null=False, help_text="default llm ID")
+    tenant_llm_id = IntegerField(null=True, help_text="LLM config ID from tenant_llm table")
+    tenant_rerank_id = IntegerField(null=True, help_text="rerank model config ID from tenant_llm table")
     llm_setting = JSONField(null=False, default={"temperature": 0.1, "top_p": 0.3, "frequency_penalty": 0.7, "presence_penalty": 0.4, "max_tokens": 512})
     prompt_type = CharField(max_length=16, null=False, default="simple", help_text="simple|advanced", index=True)
     prompt_config = JSONField(
