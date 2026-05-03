@@ -38,26 +38,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-qh-cream flex items-center justify-center px-4">
+    <div className="min-h-screen bg-brand-gray flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo area */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-qh-green mb-4 shadow-md">
-            <span className="text-white text-2xl font-bold">岐</span>
-          </div>
-          <h1 className="text-2xl font-bold text-qh-ink tracking-wide">
+          <img
+            src="/logo.svg"
+            className="w-16 h-16 drop-shadow-md mx-auto mb-4"
+            alt="logo"
+          />
+          <h1 className="text-2xl font-bold text-brand-ink tracking-wide">
             岐黄问诊
           </h1>
-          <p className="text-qh-brown text-sm mt-1">AI 辅助医疗问答平台</p>
+          <p className="text-brand-muted text-sm mt-1">AI 辅助医疗问答平台</p>
         </div>
 
         {/* Form card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-sm border border-qh-border p-8 space-y-5"
+          className="bg-white rounded-2xl shadow-sm border border-brand-border p-8 space-y-5"
         >
           <div>
-            <label className="block text-sm font-medium text-qh-ink mb-1.5">
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">
               邮箱
             </label>
             <input
@@ -66,11 +68,11 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="请输入邮箱"
               autoComplete="email"
-              className="w-full px-4 py-2.5 rounded-xl border border-qh-border bg-qh-cream/50 text-qh-ink placeholder-qh-brown/60 focus:outline-none focus:ring-2 focus:ring-qh-green/40 focus:border-qh-green transition text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-qh-ink mb-1.5">
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">
               密码
             </label>
             <input
@@ -79,7 +81,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="请输入密码"
               autoComplete="current-password"
-              className="w-full px-4 py-2.5 rounded-xl border border-qh-border bg-qh-cream/50 text-qh-ink placeholder-qh-brown/60 focus:outline-none focus:ring-2 focus:ring-qh-green/40 focus:border-qh-green transition text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
             />
           </div>
 
@@ -88,23 +90,23 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full py-2.5 rounded-xl bg-qh-green text-white font-medium text-sm hover:bg-qh-green-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full py-2.5 rounded-xl bg-brand-blue text-white font-medium text-sm hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? '登录中…' : '登录'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-qh-brown mt-5">
+        <p className="text-center text-sm text-brand-muted mt-5">
           还没有账号？{' '}
           <button
             onClick={() => navigate('/register')}
-            className="text-qh-green font-medium hover:underline"
+            className="text-brand-blue font-medium hover:underline"
           >
             免费注册
           </button>
         </p>
 
-        <p className="text-center text-xs text-qh-brown/60 mt-4">
+        <p className="text-center text-xs text-brand-muted/60 mt-4">
           本平台仅供健康参考，不构成医疗建议，请咨询专业医生
         </p>
       </div>

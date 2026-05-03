@@ -25,16 +25,12 @@ function incGuestCount() {
 }
 
 function BotAvatar() {
-  return (
-    <div className="w-8 h-8 rounded-full bg-qh-gold/20 border border-qh-gold/30 flex items-center justify-center text-qh-gold text-sm font-bold shrink-0">
-      岐
-    </div>
-  );
+  return <img src="/logo.svg" className="w-8 h-8" alt="logo" />;
 }
 
 function UserAvatar() {
   return (
-    <div className="w-8 h-8 rounded-full bg-qh-green flex items-center justify-center text-white text-sm font-bold shrink-0">
+    <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white text-sm font-bold shrink-0">
       您
     </div>
   );
@@ -58,24 +54,24 @@ function PaywallModal({
         className="bg-white rounded-3xl shadow-xl p-8 mx-4 max-w-sm w-full text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-14 h-14 rounded-2xl bg-qh-green flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-          岐
-        </div>
-        <h2 className="text-xl font-bold text-qh-ink mb-2">继续使用需要注册</h2>
-        <p className="text-sm text-qh-brown mb-6 leading-relaxed">
+        <img src="/logo.svg" className="w-14 h-14 mx-auto mb-4" alt="logo" />
+        <h2 className="text-xl font-bold text-brand-ink mb-2">
+          继续使用需要注册
+        </h2>
+        <p className="text-sm text-brand-muted mb-6 leading-relaxed">
           您已体验 {GUEST_LIMIT} 次免费问答。
           <br />
           注册账号即可无限使用，并保存历史对话。
         </p>
         <button
           onClick={onRegister}
-          className="w-full py-3 rounded-xl bg-qh-green text-white font-semibold text-sm hover:bg-qh-green-dark transition mb-3"
+          className="w-full py-3 rounded-xl bg-brand-blue text-white font-semibold text-sm hover:bg-brand-blue-dark transition mb-3"
         >
           免费注册
         </button>
         <button
           onClick={onLogin}
-          className="w-full py-3 rounded-xl border border-qh-border text-qh-ink font-medium text-sm hover:bg-qh-cream transition"
+          className="w-full py-3 rounded-xl border border-brand-border text-brand-ink font-medium text-sm hover:bg-brand-gray transition"
         >
           已有账号，去登录
         </button>
@@ -241,25 +237,23 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-qh-cream">
+    <div className="flex flex-col h-screen bg-brand-gray">
       {/* Header */}
-      <header className="bg-white border-b border-qh-border px-5 py-3 flex items-center justify-between shrink-0">
+      <header className="bg-white border-b border-brand-border px-5 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-qh-green flex items-center justify-center text-white font-bold text-sm">
-            岐
-          </div>
-          <span className="font-bold text-qh-ink text-sm">岐黄问诊</span>
+          <img src="/logo.svg" className="w-7 h-7" alt="logo" />
+          <span className="font-bold text-brand-ink text-sm">岐黄问诊</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/login')}
-            className="px-4 py-1.5 text-sm text-qh-ink hover:text-qh-green transition font-medium"
+            className="px-4 py-1.5 text-sm text-brand-ink hover:text-brand-blue transition font-medium"
           >
             登录
           </button>
           <button
             onClick={() => navigate('/register')}
-            className="px-4 py-1.5 text-sm bg-qh-green text-white rounded-lg hover:bg-qh-green-dark transition font-medium"
+            className="px-4 py-1.5 text-sm bg-brand-blue text-white rounded-lg hover:bg-brand-blue-dark transition font-medium"
           >
             注册
           </button>
@@ -271,18 +265,20 @@ export default function LandingPage() {
         {!hasMessages ? (
           /* Welcome */
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
-            <div className="w-16 h-16 rounded-2xl bg-qh-green flex items-center justify-center text-white text-3xl font-bold mb-5 shadow-md">
-              岐
-            </div>
-            <h2 className="text-2xl font-bold text-qh-ink mb-1">岐黄问诊</h2>
-            <p className="text-qh-brown text-sm mb-2">
+            <img
+              src="/logo.svg"
+              className="w-16 h-16 drop-shadow-md"
+              alt="logo"
+            />
+            <h2 className="text-2xl font-bold text-brand-ink mb-1">岐黄问诊</h2>
+            <p className="text-brand-muted text-sm mb-2">
               AI 辅助医疗问答 · 有问必答
             </p>
-            <p className="text-qh-brown/60 text-xs mb-8">
+            <p className="text-brand-muted/60 text-xs mb-8">
               免费体验 {GUEST_LIMIT} 次问答，
               <button
                 onClick={() => navigate('/register')}
-                className="text-qh-green underline underline-offset-2"
+                className="text-brand-blue underline underline-offset-2"
               >
                 注册
               </button>{' '}
@@ -293,7 +289,7 @@ export default function LandingPage() {
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="text-left px-4 py-3 rounded-xl bg-white border border-qh-border text-sm text-qh-ink hover:border-qh-green/40 hover:bg-qh-green-light transition shadow-sm"
+                  className="text-left px-4 py-3 rounded-xl bg-white border border-brand-border text-sm text-brand-ink hover:border-brand-blue/40 hover:bg-brand-blue-light transition shadow-sm"
                 >
                   {q}
                 </button>
@@ -314,8 +310,8 @@ export default function LandingPage() {
                   <div
                     className={`max-w-[72%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                       isUser
-                        ? 'bg-qh-green text-white rounded-tr-sm'
-                        : 'bg-white text-qh-ink border border-qh-border-light rounded-tl-sm shadow-sm'
+                        ? 'bg-brand-blue text-white rounded-tr-sm'
+                        : 'bg-white text-brand-ink border border-brand-border rounded-tl-sm shadow-sm'
                     }`}
                   >
                     {m.content}
@@ -335,21 +331,21 @@ export default function LandingPage() {
           <div className="max-w-3xl mx-auto">
             {/* Remaining count badge */}
             {hasMessages && getGuestCount() < GUEST_LIMIT && (
-              <p className="text-center text-xs text-qh-brown/60 mb-2">
+              <p className="text-center text-xs text-brand-muted/60 mb-2">
                 还剩{' '}
-                <span className="font-semibold text-qh-green">
+                <span className="font-semibold text-brand-blue">
                   {GUEST_LIMIT - getGuestCount()}
                 </span>{' '}
                 次免费问答 ·{' '}
                 <button
                   onClick={() => navigate('/register')}
-                  className="text-qh-green underline underline-offset-2"
+                  className="text-brand-blue underline underline-offset-2"
                 >
                   注册无限使用
                 </button>
               </p>
             )}
-            <div className="flex items-end gap-2 bg-white border border-qh-border rounded-2xl px-4 py-3 shadow-sm focus-within:border-qh-green/50 focus-within:ring-2 focus-within:ring-qh-green/10 transition">
+            <div className="flex items-end gap-2 bg-white border border-brand-border rounded-2xl px-4 py-3 shadow-sm focus-within:border-brand-blue/50 focus-within:ring-2 focus-within:ring-brand-blue/10 transition">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -358,12 +354,12 @@ export default function LandingPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="输入问题，Enter 发送，Shift+Enter 换行"
                 disabled={streaming}
-                className="flex-1 resize-none bg-transparent text-sm text-qh-ink placeholder-qh-brown/50 outline-none min-h-[24px] max-h-[160px] leading-6"
+                className="flex-1 resize-none bg-transparent text-sm text-brand-ink placeholder-brand-muted/50 outline-none min-h-[24px] max-h-[160px] leading-6"
               />
               <button
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || streaming}
-                className="shrink-0 w-8 h-8 rounded-xl bg-qh-green text-white flex items-center justify-center hover:bg-qh-green-dark disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="shrink-0 w-8 h-8 rounded-xl bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
                 {streaming ? (
                   <svg
@@ -402,7 +398,7 @@ export default function LandingPage() {
                 )}
               </button>
             </div>
-            <p className="text-center text-[11px] text-qh-brown/50 mt-2">
+            <p className="text-center text-[11px] text-brand-muted/50 mt-2">
               本平台仅供健康参考，不构成医疗建议，请咨询专业医生
             </p>
           </div>

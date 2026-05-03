@@ -297,6 +297,33 @@ client_urls_prefix = [
 ]
 
 
+# ── SPA 静态文件托管（生产环境） ──────────────────────────────────────────────
+from quart import send_from_directory
+
+DIST = Path(__file__).parent.parent / "web" / "dist"
+_API_PREFIXES = ("/api/", "/v1/")
+
+
+def _is_api_path(path: str) -> bool:
+    return any(path.startswith(p) for p in _API_PREFIXES)
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+async def serve_spa(path: str):
+    if _is_api_path(f"/{path}") or _is_api_path(request.path):
+        return jsonify({
+            "code": RetCode.NOT_FOUND,
+            "message": f"Not Found: {request.path}",
+            "data": None,
+            "error": "Not Found",
+        }), RetCode.NOT_FOUND
+    full = DIST / path
+    if full.is_file():
+        return await send_from_directory(str(DIST), path)
+    return await send_from_directory(str(DIST), "index.html")
+
+
 @app.errorhandler(404)
 async def not_found(error):
     logging.error(f"The requested URL {request.path} was not found")

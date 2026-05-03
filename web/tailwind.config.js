@@ -31,7 +31,18 @@ module.exports = {
         0.5: '0.5px',
       },
       colors: {
-        /* 岐黄问诊 主题色 */
+        /* 岐黄问诊 蓝白医疗主题 */
+        brand: {
+          blue: '#1570EF',
+          'blue-dark': '#1054B8',
+          'blue-light': '#EFF6FF',
+          white: '#FFFFFF',
+          gray: '#F8FAFC',
+          border: '#DBEAFE',
+          ink: '#1E293B',
+          muted: '#64748B',
+        },
+        /* 旧岐黄系（保留向后兼容，逐步废弃） */
         qh: {
           cream: '#F5F0E8',
           sidebar: '#EBE5D9',

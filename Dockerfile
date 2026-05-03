@@ -1,6 +1,15 @@
-# 生产环境后端镜像
+# 生产环境全栈镜像（前端 + 后端）
 # 使用 uv 安装依赖，Python 3.12
 
+# Stage 1: 构建前端
+FROM node:20-alpine AS fe-builder
+WORKDIR /app/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ .
+RUN npm run build
+
+# Stage 2: 后端 + 静态文件托管
 FROM python:3.12-slim AS base
 
 # 系统依赖
@@ -27,6 +36,9 @@ COPY pyproject.toml uv.lock ./
 
 # 安装 Python 依赖（不安装项目本身，避免重复）
 RUN uv sync --frozen --no-install-project --python 3.12
+
+# 复制前端构建产物
+COPY --from=fe-builder /app/web/dist ./web/dist
 
 # 复制项目代码
 COPY . .

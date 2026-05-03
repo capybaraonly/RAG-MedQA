@@ -78,6 +78,7 @@ export interface Session {
   name: string;
   dialog_id: string;
   message: Message[];
+  reference?: Reference[];
   update_time?: number;
   create_time?: number;
 }
@@ -87,6 +88,7 @@ export interface Message {
   content: string;
   id?: string;
   created_at?: number;
+  reference?: Reference;
 }
 
 export interface SessionListResult {
@@ -125,10 +127,25 @@ export async function getSession(sessionId: string): Promise<Session | null> {
 
 // ── Streaming ask ─────────────────────────────────────────────────────────────
 
+export interface ChunkRef {
+  id: string;
+  content: string;
+  document_id: string;
+  document_name: string;
+  similarity?: number;
+}
+
+export interface Reference {
+  total: number;
+  chunks: ChunkRef[];
+  doc_aggs: { doc_id: string; docnm_kwd: string; count: number }[];
+}
+
 export interface AskChunk {
   answer: string;
   session_id?: string;
   done: boolean;
+  reference?: Reference;
 }
 
 export async function* askStream(
@@ -190,8 +207,22 @@ export async function* askStream(
           stopped = true;
           break;
         }
-        const chunk = parsed.data as { answer: string; session_id?: string };
+        const chunk = parsed.data as {
+          answer: string;
+          session_id?: string;
+          final?: boolean;
+          reference?: Reference;
+        };
         if (chunk.session_id && onSessionId) onSessionId(chunk.session_id);
+        if (chunk.final) {
+          yield {
+            answer: chunk.answer ?? '',
+            done: true,
+            reference: chunk.reference,
+          };
+          stopped = true;
+          break;
+        }
         yield { answer: chunk.answer ?? '', done: false };
       } catch {
         // skip malformed lines
@@ -209,6 +240,22 @@ export interface UserInfo {
   nickname: string;
   email: string;
   avatar?: string;
+}
+
+/** Map session-level reference array onto individual assistant messages. */
+export function attachReferences(session: Session): Message[] {
+  const messages: Message[] = (session.message ?? []).filter(
+    (m, i) => !(i === 0 && m.role === 'assistant'),
+  );
+  const refs = session.reference ?? [];
+  let refIdx = 0;
+  for (const msg of messages) {
+    if (msg.role === 'assistant' && refIdx < refs.length) {
+      msg.reference = refs[refIdx];
+      refIdx++;
+    }
+  }
+  return messages;
 }
 
 export function getStoredUser(): UserInfo | null {

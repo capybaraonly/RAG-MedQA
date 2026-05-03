@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 
 const spinner = (
-  <div className="fixed inset-0 flex items-center justify-center bg-qh-cream">
-    <div className="h-8 w-8 animate-spin rounded-full border-2 border-qh-green border-t-transparent" />
+  <div className="fixed inset-0 flex items-center justify-center bg-brand-gray">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />
   </div>
 );
 
