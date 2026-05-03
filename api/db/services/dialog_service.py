@@ -249,7 +249,6 @@ def get_models(dialog):
         raise Exception("**ERROR**: Knowledge bases use different embedding models.")
 
     if embedding_list:
-        embd_owner_tenant_id = kbs[0].tenant_id
         embd_model_config = get_model_config_by_type_and_name(LLMType.EMBEDDING, embedding_list[0])
         embd_mdl = LLMBundle(embd_model_config)
         if not embd_mdl:
@@ -754,7 +753,7 @@ async def use_sql(question, field_map, tenant_id, chat_mdl, quota=True, kb_ids=N
     # Construct the full table name
     # For Elasticsearch: RAG-MedQA_{tenant_id} (kb_id is in WHERE clause)
     # For Infinity: RAG-MedQA_{tenant_id}_{kb_id} (each KB has its own table)
-    base_table = index_name(tenant_id)
+    base_table = index_name()
     if doc_engine == "infinity" and kb_ids and len(kb_ids) == 1:
         # Infinity: append kb_id to table name
         table_name = f"{base_table}_{kb_ids[0]}"

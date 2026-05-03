@@ -88,21 +88,16 @@ class TaskService(CommonService):
             Document.type,
             Document.location,
             Document.size,
-            Knowledgebase.tenant_id,
             Knowledgebase.language,
             Knowledgebase.embd_id,
             Knowledgebase.pagerank,
             Knowledgebase.parser_config.alias("kb_parser_config"),
-            Tenant.img2txt_id,
-            Tenant.asr_id,
-            Tenant.llm_id,
             cls.model.update_time,
         ]
         docs = (
             cls.model.select(*fields)
                 .join(Document, on=(doc_id == Document.id))
                 .join(Knowledgebase, on=(Document.kb_id == Knowledgebase.id))
-                .join(Tenant, on=(Knowledgebase.tenant_id == Tenant.id))
                 .where(cls.model.id == task_id)
         )
         docs = list(docs.dicts())
@@ -430,7 +425,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
             if pre_task["chunk_ids"]:
                 pre_chunk_ids.extend(pre_task["chunk_ids"].split())
         if pre_chunk_ids:
-            settings.docStoreConn.delete({"id": pre_chunk_ids}, search.index_name(chunking_config["tenant_id"]),
+            settings.docStoreConn.delete({"id": pre_chunk_ids}, search.index_name(),
                                          chunking_config["kb_id"])
     DocumentService.update_by_id(doc["id"], {"chunk_num": ck_num})
 

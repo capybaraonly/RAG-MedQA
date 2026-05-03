@@ -49,11 +49,11 @@ def update_document_name_only(document_id, req_doc_name):
     ok, doc = DocumentService.get_by_id(document_id)
     if not ok:
         return get_error_data_result(message=f"Not able to find document by id:{document_id}")
-    if settings.docStoreConn.index_exist(search.index_name(tenant_id), doc.kb_id):
+    if settings.docStoreConn.index_exist(search.index_name(), doc.kb_id):
         settings.docStoreConn.update(
             {"doc_id": document_id},
             es_body,
-            search.index_name(tenant_id),
+            search.index_name(),
             doc.kb_id,
         )
     return None
@@ -101,7 +101,7 @@ def update_chunk_method_only(req, doc, dataset_id, tenant_id):
             )
         if not e:
             return get_error_data_result(message="Document not found!")
-        settings.docStoreConn.delete({"doc_id": doc.id}, search.index_name(tenant_id), dataset_id)
+        settings.docStoreConn.delete({"doc_id": doc.id}, search.index_name(), dataset_id)
     return None
 
 def update_document_status_only(status:int, doc, kb):
@@ -123,7 +123,7 @@ def update_document_status_only(status:int, doc, kb):
         try:
             if not DocumentService.update_by_id(doc.id, {"status": str(status)}):
                 return get_error_data_result(message="Database error (Document update)!")
-            settings.docStoreConn.update({"doc_id": doc.id}, {"available_int": status}, search.index_name(kb.tenant_id), doc.kb_id)
+            settings.docStoreConn.update({"doc_id": doc.id}, {"available_int": status}, search.index_name(), doc.kb_id)
         except Exception as e:
             return server_error_response(e)
     return None

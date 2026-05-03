@@ -4,13 +4,13 @@
 
 用法示例:
   # 仅 QA 数据，限制 100 条（本地验证）
-  python scripts/build_medical_kb.py --tenant-id <id> --qa-limit 100
+  python scripts/build_medical_kb.py --qa-limit 100
 
   # 全量 QA + PDF（GPU 机器建议 --batch-size 256）
-  python scripts/build_medical_kb.py --tenant-id <id> --pdf-dir data/guidelines --batch-size 256
+  python scripts/build_medical_kb.py --pdf-dir data/guidelines --batch-size 256
 
   # 中断后续传（重跑同一命令即可，断点会自动接续）
-  python scripts/build_medical_kb.py --tenant-id <id> --qa-limit 100
+  python scripts/build_medical_kb.py --qa-limit 100
 """
 
 import json
@@ -25,7 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from common import settings
 from common.settings import init_settings
 from rag.nlp.search import index_name as search_index_name
-from common.constants import LLMType
+from common.constants import LLMType, SYSTEM_TENANT_ID
 
 CHECKPOINT_DIR = PROJECT_ROOT / "data" / ".checkpoints"
 
@@ -90,7 +90,7 @@ def load_medical_qa_from_dialogue_csv(csv_dir: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def _make_chunk(text: str, content_with_weight: str, doc_id: str,
-                kb_id: str, tenant_id: str, docnm: str) -> dict:
+                kb_id: str, docnm: str) -> dict:
     """生成一个 ES chunk，含全文检索字段和 tokenized 字段。"""
     from common.misc_utils import get_uuid
     from rag.nlp import rag_tokenizer
@@ -100,7 +100,7 @@ def _make_chunk(text: str, content_with_weight: str, doc_id: str,
         "id": get_uuid(),
         "doc_id": doc_id,
         "kb_id": kb_id,
-        "tenant_id": tenant_id,
+        "tenant_id": SYSTEM_TENANT_ID,
         "content_ltks": content_ltks,
         "content_sm_ltks": rag_tokenizer.fine_grained_tokenize(content_ltks),
         "content_with_weight": content_with_weight,
@@ -111,7 +111,7 @@ def _make_chunk(text: str, content_with_weight: str, doc_id: str,
     }
 
 
-def chunk_qa_pairs(qa_pairs: list[dict], tenant_id: str, kb_id: str) -> list[dict]:
+def chunk_qa_pairs(qa_pairs: list[dict], kb_id: str) -> list[dict]:
     chunks = []
     for pair in qa_pairs:
         q, a = pair["question"], pair["answer"]
@@ -120,7 +120,6 @@ def chunk_qa_pairs(qa_pairs: list[dict], tenant_id: str, kb_id: str) -> list[dic
             content_with_weight=f"问题：{q}\t回答：{a}",
             doc_id="medical_qa_corpus",
             kb_id=kb_id,
-            tenant_id=tenant_id,
             docnm="医疗问答",
         )
         chunks.append(chunk)
@@ -128,7 +127,7 @@ def chunk_qa_pairs(qa_pairs: list[dict], tenant_id: str, kb_id: str) -> list[dic
 
 
 def chunk_pdf_sections(sections, tables, pdf_path: str,
-                       tenant_id: str, kb_id: str) -> list[dict]:
+                       kb_id: str) -> list[dict]:
     docnm = Path(pdf_path).stem
     doc_id = f"pdf_{docnm}"
     chunks = []
@@ -137,12 +136,12 @@ def chunk_pdf_sections(sections, tables, pdf_path: str,
         text = text.strip()
         if len(text) < 10:
             continue
-        chunks.append(_make_chunk(text, text, doc_id, kb_id, tenant_id, docnm))
+        chunks.append(_make_chunk(text, text, doc_id, kb_id, docnm))
 
     for (_, html_table), _ in tables:
         if not html_table:
             continue
-        chunks.append(_make_chunk(html_table, html_table, doc_id, kb_id, tenant_id, docnm))
+        chunks.append(_make_chunk(html_table, html_table, doc_id, kb_id, docnm))
 
     return chunks
 
@@ -154,12 +153,11 @@ def chunk_pdf_sections(sections, tables, pdf_path: str,
 def embed_and_index_chunks(
     chunks: list[dict],
     emb_model,
-    tenant_id: str,
     kb_id: str,
     ckpt_key: str,
     batch_size: int = 32,
 ):
-    idx_name = search_index_name(tenant_id)
+    idx_name = search_index_name()
     ckpt = _load_ckpt(ckpt_key)
     start = ckpt.get("offset", 0)
     total = len(chunks)
@@ -195,7 +193,6 @@ def embed_and_index_chunks(
 # ---------------------------------------------------------------------------
 
 def build_qa_knowledge_base(
-    tenant_id: str,
     kb_id: str,
     qa_source: str,
     qa_data_path: str,
@@ -217,13 +214,13 @@ def build_qa_knowledge_base(
         qa_pairs = qa_pairs[:qa_limit]
     print(f"[QA] 已加载 {len(qa_pairs)} 条 QA 对，开始生成 chunks...")
 
-    chunks = chunk_qa_pairs(qa_pairs, tenant_id, kb_id)
+    chunks = chunk_qa_pairs(qa_pairs, kb_id)
     print(f"[QA] 已生成 {len(chunks)} 个 chunks，开始嵌入...")
 
     emb_cfg = get_tenant_default_model_by_type(LLMType.EMBEDDING)
     emb_model = LLMBundle(emb_cfg)
     embed_and_index_chunks(
-        chunks, emb_model, tenant_id, kb_id,
+        chunks, emb_model, kb_id,
         ckpt_key=f"{kb_id}_qa",
         batch_size=batch_size,
     )
@@ -234,7 +231,6 @@ def build_qa_knowledge_base(
 # ---------------------------------------------------------------------------
 
 def build_pdf_knowledge_base(
-    tenant_id: str,
     kb_id: str,
     pdf_dir: str,
     batch_size: int,
@@ -280,12 +276,12 @@ def build_pdf_knowledge_base(
             continue
 
         print(f"[PDF]   → {len(sections)} sections，{len(tables)} tables")
-        chunks = chunk_pdf_sections(sections, tables, fname, tenant_id, kb_id)
+        chunks = chunk_pdf_sections(sections, tables, fname, kb_id)
         if not chunks:
             print(f"[PDF]   → 无有效 chunks，跳过")
         else:
             embed_and_index_chunks(
-                chunks, emb_model, tenant_id, kb_id,
+                chunks, emb_model, kb_id,
                 ckpt_key=f"{kb_id}_pdf_{pdf_path.stem}",
                 batch_size=batch_size,
             )
@@ -302,7 +298,6 @@ def build_pdf_knowledge_base(
 # ---------------------------------------------------------------------------
 
 def build_knowledge_base(
-    tenant_id: str,
     kb_name: str = "医疗知识库",
     qa_source: str = "shibing624/medical",
     qa_data_path: str = "data/medical/finetune/train_zh_0.json",
@@ -322,7 +317,7 @@ def build_knowledge_base(
     print(f"=== 构建知识库: {kb_name} ===")
 
     # 断点续传：复用同名知识库
-    ckpt_key = f"global_{tenant_id}_{kb_name}"
+    ckpt_key = f"global_{kb_name}"
     ckpt = _load_ckpt(ckpt_key)
     if ckpt.get("kb_id"):
         kb_id = ckpt["kb_id"]
@@ -331,7 +326,7 @@ def build_knowledge_base(
         kb_id = get_uuid()
         KnowledgebaseService.save(
             id=kb_id,
-            tenant_id=tenant_id,
+            tenant_id=SYSTEM_TENANT_ID,
             name=kb_name,
             description="中文医疗知识库 - 包含临床问答和诊疗指南",
             embd_id="BAAI/bge-m3",
@@ -343,7 +338,7 @@ def build_knowledge_base(
         print(f"  知识库已创建: {kb_id}")
 
     build_qa_knowledge_base(
-        tenant_id=tenant_id,
+        tenant_id=SYSTEM_TENANT_ID,
         kb_id=kb_id,
         qa_source=qa_source,
         qa_data_path=qa_data_path,
@@ -353,7 +348,7 @@ def build_knowledge_base(
 
     if pdf_dir:
         build_pdf_knowledge_base(
-            tenant_id=tenant_id,
+            tenant_id=SYSTEM_TENANT_ID,
             kb_id=kb_id,
             pdf_dir=pdf_dir,
             batch_size=batch_size,
@@ -369,7 +364,6 @@ if __name__ == "__main__":
     import argparse
 
     ap = argparse.ArgumentParser(description="构建医疗知识库")
-    ap.add_argument("--tenant-id", required=True, help="租户 ID")
     ap.add_argument("--kb-name", default="医疗知识库")
     ap.add_argument(
         "--qa-source",
@@ -395,7 +389,6 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     build_knowledge_base(
-        tenant_id=args.tenant_id,
         kb_name=args.kb_name,
         qa_source=args.qa_source,
         qa_data_path=args.qa_data_path,

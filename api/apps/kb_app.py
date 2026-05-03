@@ -13,7 +13,7 @@ from api.db.services.document_service import DocumentService, queue_raptor_o_gra
 from api.db.services.doc_metadata_service import DocMetadataService
 from api.db.services.pipeline_operation_log_service import PipelineOperationLogService
 from api.db.services.task_service import TaskService, GRAPH_RAPTOR_FAKE_DOC_ID
-from api.db.services.user_service import UserTenantService
+
 from api.db.joint_services.tenant_model_service import get_model_config_by_type_and_name, get_model_config_by_id
 from common.constants import SYSTEM_TENANT_ID
 from api.utils.api_utils import (
@@ -41,7 +41,7 @@ Deprecated, todo delete
 @validate_request("name")
 async def create():
     req = await get_request_json()
-    create_dict = ensure_tenant_model_id_for_params(current_user.id, req)
+    create_dict = req
     e, res = KnowledgebaseService.create_with_name(
         name = create_dict.pop("name", None),
         tenant_id = current_user.id,
@@ -67,7 +67,7 @@ async def create():
 @not_allowed_parameters("id", "tenant_id", "created_by", "create_time", "update_time", "create_date", "update_date", "created_by")
 async def update():
     req = await get_request_json()
-    update_dict = ensure_tenant_model_id_for_params(current_user.id, req)
+    update_dict = req
     if not isinstance(update_dict["name"], str):
         return get_data_error_result(message="Dataset name must be string.")
     if update_dict["name"].strip() == "":
@@ -142,7 +142,7 @@ async def update():
                     settings.docStoreConn.update,
                     {"kb_id": kb.id},
                     {PAGERANK_FLD: update_dict["pagerank"]},
-                    search.index_name(kb.tenant_id),
+                    search.index_name(),
                     kb.id,
                 )
             else:
@@ -151,7 +151,7 @@ async def update():
                     settings.docStoreConn.update,
                     {"exists": PAGERANK_FLD},
                     {"remove": PAGERANK_FLD},
-                    search.index_name(kb.tenant_id),
+                    search.index_name(),
                     kb.id,
                 )
 
@@ -193,14 +193,9 @@ async def update_metadata_setting():
 def detail():
     kb_id = request.args["kb_id"]
     try:
-        tenants = UserTenantService.query(user_id=current_user.id)
-        for tenant in tenants:
-            if KnowledgebaseService.query(
-                    tenant_id=tenant.tenant_id, id=kb_id):
-                break
-        else:
+        if not KnowledgebaseService.query(id=kb_id):
             return get_json_result(
-                data=False, message='Only owner of dataset authorized for this operation.',
+                data=False, message='Dataset not found.',
                 code=RetCode.OPERATING_ERROR)
         kb = KnowledgebaseService.get_detail(kb_id)
         if not kb:
@@ -286,8 +281,8 @@ async def rm():
             # Delete the table BEFORE deleting the database record
             for kb in kbs:
                 try:
-                    settings.docStoreConn.delete({"kb_id": kb.id}, search.index_name(kb.tenant_id), kb.id)
-                    settings.docStoreConn.delete_idx(search.index_name(kb.tenant_id), kb.id)
+                    settings.docStoreConn.delete({"kb_id": kb.id}, search.index_name(), kb.id)
+                    settings.docStoreConn.delete_idx(search.index_name(), kb.id)
                     logging.info(f"Dropped index for dataset {kb.id}")
                 except Exception as e:
                     logging.error(f"Failed to drop index for dataset {kb.id}: {e}")
@@ -315,10 +310,7 @@ def list_tags(kb_id):
             code=RetCode.AUTHENTICATION_ERROR
         )
 
-    tenants = UserTenantService.get_tenants_by_user_id(current_user.id)
-    tags = []
-    for tenant in tenants:
-        tags += settings.retriever.all_tags([kb_id])
+    tags = settings.retriever.all_tags([kb_id])
     return get_json_result(data=tags)
 
 
@@ -334,10 +326,7 @@ def list_tags_from_kbs():
                 code=RetCode.AUTHENTICATION_ERROR
             )
 
-    tenants = UserTenantService.get_tenants_by_user_id(current_user.id)
-    tags = []
-    for tenant in tenants:
-        tags += settings.retriever.all_tags(kb_ids)
+    tags = settings.retriever.all_tags(kb_ids)
     return get_json_result(data=tags)
 
 
@@ -357,7 +346,7 @@ async def rm_tags(kb_id):
     for t in req["tags"]:
         settings.docStoreConn.update({"tag_kwd": t, "kb_id": [kb_id]},
                                      {"remove": {"tag_kwd": t}},
-                                     search.index_name(kb.tenant_id),
+                                     search.index_name(),
                                      kb_id)
     return get_json_result(data=True)
 
@@ -377,7 +366,7 @@ async def rename_tags(kb_id):
 
     settings.docStoreConn.update({"tag_kwd": req["from_tag"], "kb_id": [kb_id]},
                                      {"remove": {"tag_kwd": req["from_tag"].strip()}, "add": {"tag_kwd": req["to_tag"]}},
-                                     search.index_name(kb.tenant_id),
+                                     search.index_name(),
                                      kb_id)
     return get_json_result(data=True)
 
@@ -399,9 +388,9 @@ async def knowledge_graph(kb_id):
     }
 
     obj = {"graph": {}, "mind_map": {}}
-    if not settings.docStoreConn.index_exist(search.index_name(kb.tenant_id), kb_id):
+    if not settings.docStoreConn.index_exist(search.index_name(), kb_id):
         return get_json_result(data=obj)
-    sres = await settings.retriever.search(req, search.index_name(kb.tenant_id), [kb_id])
+    sres = await settings.retriever.search(req, search.index_name(), [kb_id])
     if not len(sres.ids):
         return get_json_result(data=obj)
 
@@ -434,7 +423,7 @@ def delete_knowledge_graph(kb_id):
             code=RetCode.AUTHENTICATION_ERROR
         )
     _, kb = KnowledgebaseService.get_by_id(kb_id)
-    settings.docStoreConn.delete({"knowledge_graph_kwd": ["graph", "subgraph", "entity", "relation"]}, search.index_name(kb.tenant_id), kb_id)
+    settings.docStoreConn.delete({"knowledge_graph_kwd": ["graph", "subgraph", "entity", "relation"]}, search.index_name(), kb_id)
 
     return get_json_result(data=True)
 """
@@ -814,13 +803,13 @@ def delete_kb_task():
             task_id = kb.graphrag_task_id
             kb_task_finish_at = "graphrag_task_finish_at"
             cancel_task(task_id)
-            settings.docStoreConn.delete({"knowledge_graph_kwd": ["graph", "subgraph", "entity", "relation"]}, search.index_name(kb.tenant_id), kb_id)
+            settings.docStoreConn.delete({"knowledge_graph_kwd": ["graph", "subgraph", "entity", "relation"]}, search.index_name(), kb_id)
         case PipelineTaskType.RAPTOR:
             kb_task_id_field = "raptor_task_id"
             task_id = kb.raptor_task_id
             kb_task_finish_at = "raptor_task_finish_at"
             cancel_task(task_id)
-            settings.docStoreConn.delete({"raptor_kwd": ["raptor"]}, search.index_name(kb.tenant_id), kb_id)
+            settings.docStoreConn.delete({"raptor_kwd": ["raptor"]}, search.index_name(), kb_id)
         case PipelineTaskType.MINDMAP:
             kb_task_id_field = "mindmap_task_id"
             task_id = kb.mindmap_task_id
@@ -875,7 +864,7 @@ async def check_embedding():
         n: int = 5,
         base_fields=("docnm_kwd","doc_id","content_with_weight","page_num_int","position_int","top_int"),
     ):
-        index_nm = search.index_name(tenant_id)
+        index_nm = search.index_name()
 
         res0 = docStoreConn.search(
             select_fields=[], highlight_fields=[],

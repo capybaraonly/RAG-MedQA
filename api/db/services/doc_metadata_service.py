@@ -24,7 +24,7 @@ class DocMetadataService:
     """Service for managing document metadata in ES/Infinity"""
 
     @staticmethod
-    def _get_doc_meta_index_name(tenant_id: str) -> str:
+    def _get_doc_meta_index_name() -> str:
         """
         Get the index name for document metadata.
 
@@ -161,7 +161,7 @@ class DocMetadataService:
             return []
 
         tenant_id = kb.tenant_id
-        index_name = cls._get_doc_meta_index_name(tenant_id)
+        index_name = cls._get_doc_meta_index_name()
 
         # Check if metadata index exists, create if it doesn't
         if not settings.docStoreConn.index_exist(index_name, ""):
@@ -344,7 +344,7 @@ class DocMetadataService:
                 doc_meta["meta_fields"] = {}
 
             # Ensure index/table exists (per-tenant for both ES and Infinity)
-            index_name = cls._get_doc_meta_index_name(tenant_id)
+            index_name = cls._get_doc_meta_index_name()
 
             # Check if table exists
             table_exists = settings.docStoreConn.index_exist(index_name, kb_id)
@@ -418,7 +418,7 @@ class DocMetadataService:
             doc_obj = doc
             tenant_id = doc.knowledgebase.tenant_id
             kb_id = doc_obj.kb_id
-            index_name = cls._get_doc_meta_index_name(tenant_id)
+            index_name = cls._get_doc_meta_index_name()
 
             # Post-process to split combined values
             processed_meta = cls._split_combined_values(meta_fields)
@@ -498,7 +498,7 @@ class DocMetadataService:
                     return False
                 tenant_id = kb.tenant_id
 
-            index_name = cls._get_doc_meta_index_name(tenant_id)
+            index_name = cls._get_doc_meta_index_name()
             logging.debug(f"[delete_document_metadata] Deleting doc_id: {doc_id}, kb_id: {kb_id}, index: {index_name}")
 
             # Check if metadata table exists before attempting deletion
@@ -653,7 +653,7 @@ class DocMetadataService:
             doc_obj = doc
             tenant_id = doc.knowledgebase.tenant_id
             kb_id = doc_obj.kb_id
-            index_name = cls._get_doc_meta_index_name(tenant_id)
+            index_name = cls._get_doc_meta_index_name()
 
             # Try to get metadata from ES/Infinity
             metadata_doc = settings.docStoreConn.get(
@@ -697,7 +697,7 @@ class DocMetadataService:
                 return {}
 
             tenant_id = kb.tenant_id
-            index_name = cls._get_doc_meta_index_name(tenant_id)
+            index_name = cls._get_doc_meta_index_name()
 
             condition = {"kb_id": kb_ids}
             order_by = OrderByExpr()

@@ -442,7 +442,7 @@ class DocumentService(CommonService):
 
         # Delete chunks from doc store - this is critical, log errors
         try:
-            settings.docStoreConn.delete({"doc_id": doc.id}, search.index_name(tenant_id), doc.kb_id)
+            settings.docStoreConn.delete({"doc_id": doc.id}, search.index_name(), doc.kb_id)
         except Exception as e:
             logging.error(f"Failed to delete chunks from doc store for document {doc.id}: {e}")
 
@@ -455,20 +455,20 @@ class DocumentService(CommonService):
         # Cleanup knowledge graph references (non-critical, log and continue)
         try:
             graph_source = settings.docStoreConn.get_fields(
-                settings.docStoreConn.search(["source_id"], [], {"kb_id": doc.kb_id, "knowledge_graph_kwd": ["graph"]}, [], OrderByExpr(), 0, 1, search.index_name(tenant_id), [doc.kb_id]),
+                settings.docStoreConn.search(["source_id"], [], {"kb_id": doc.kb_id, "knowledge_graph_kwd": ["graph"]}, [], OrderByExpr(), 0, 1, search.index_name(), [doc.kb_id]),
                 ["source_id"],
             )
             if len(graph_source) > 0 and doc.id in list(graph_source.values())[0]["source_id"]:
                 settings.docStoreConn.update(
                     {"kb_id": doc.kb_id, "knowledge_graph_kwd": ["entity", "relation", "graph", "subgraph", "community_report"], "source_id": doc.id},
                     {"remove": {"source_id": doc.id}},
-                    search.index_name(tenant_id),
+                    search.index_name(),
                     doc.kb_id,
                 )
-                settings.docStoreConn.update({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["graph"]}, {"removed_kwd": "Y"}, search.index_name(tenant_id), doc.kb_id)
+                settings.docStoreConn.update({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["graph"]}, {"removed_kwd": "Y"}, search.index_name(), doc.kb_id)
                 settings.docStoreConn.delete(
                     {"kb_id": doc.kb_id, "knowledge_graph_kwd": ["entity", "relation", "graph", "subgraph", "community_report"], "must_not": {"exists": "source_id"}},
-                    search.index_name(tenant_id),
+                    search.index_name(),
                     doc.kb_id,
                 )
         except Exception as e:
@@ -482,7 +482,7 @@ class DocumentService(CommonService):
         page = 0
         page_size = 1000
         while True:
-            chunks = settings.docStoreConn.search(["img_id"], [], {"doc_id": doc.id}, [], OrderByExpr(), page * page_size, page_size, search.index_name(tenant_id), [doc.kb_id])
+            chunks = settings.docStoreConn.search(["img_id"], [], {"doc_id": doc.id}, [], OrderByExpr(), page * page_size, page_size, search.index_name(), [doc.kb_id])
             chunk_ids = settings.docStoreConn.get_doc_ids(chunks)
             if not chunk_ids:
                 break
@@ -504,15 +504,14 @@ class DocumentService(CommonService):
             cls.model.location,
             cls.model.size,
             Knowledgebase.tenant_id,
-            Tenant.embd_id,
-            Tenant.img2txt_id,
-            Tenant.asr_id,
+            Knowledgebase.embd_id,
+            Knowledgebase.img2txt_id,
+            Knowledgebase.asr_id,
             cls.model.update_time,
         ]
         docs = (
             cls.model.select(*fields)
             .join(Knowledgebase, on=(cls.model.kb_id == Knowledgebase.id))
-            .join(Tenant, on=(Knowledgebase.tenant_id == Tenant.id))
             .where(
                 cls.model.status == StatusEnum.VALID.value,
                 ~(cls.model.type == FileType.VIRTUAL.value),
@@ -666,8 +665,7 @@ class DocumentService(CommonService):
         docs = (
             cls.model.select(cls.model.id)
             .join(Knowledgebase, on=(Knowledgebase.id == cls.model.kb_id))
-            .join(UserTenant, on=(UserTenant.tenant_id == Knowledgebase.tenant_id))
-            .where(cls.model.id == doc_id, UserTenant.user_id == user_id)
+            .where(cls.model.id == doc_id)
             .paginate(0, 1)
         )
         docs = docs.dicts()
@@ -681,8 +679,7 @@ class DocumentService(CommonService):
         docs = (
             cls.model.select(cls.model.id)
             .join(Knowledgebase, on=(Knowledgebase.id == cls.model.kb_id))
-            .join(UserTenant, on=((UserTenant.tenant_id == Knowledgebase.created_by) & (UserTenant.user_id == user_id)))
-            .where(cls.model.id == doc_id, UserTenant.status == StatusEnum.VALID.value, ((UserTenant.role == UserTenantRole.NORMAL) | (UserTenant.role == UserTenantRole.OWNER)))
+            .where(cls.model.id == doc_id, Knowledgebase.status == StatusEnum.VALID.value)
             .paginate(0, 1)
         )
         docs = docs.dicts()
@@ -723,13 +720,9 @@ class DocumentService(CommonService):
                 cls.model.content_hash,
                 Knowledgebase.language,
                 Knowledgebase.embd_id,
-                Tenant.id.alias("tenant_id"),
-                Tenant.img2txt_id,
-                Tenant.asr_id,
-                Tenant.llm_id,
+                Knowledgebase.tenant_id,
             )
             .join(Knowledgebase, on=(cls.model.kb_id == Knowledgebase.id))
-            .join(Tenant, on=(Knowledgebase.tenant_id == Tenant.id))
             .where(cls.model.id == doc_id)
         )
         configs = configs.dicts()
@@ -1021,7 +1014,6 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     from api.db.services.dialog_service import DialogService
     from api.db.services.file_service import FileService
     from api.db.services.llm_service import LLMBundle
-    from api.db.services.user_service import TenantService
     from api.db.joint_services.tenant_model_service import get_model_config_by_id, get_model_config_by_type_and_name, get_tenant_default_model_by_type
     from rag.app import naive
 
@@ -1100,10 +1092,9 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
             token_counts[doc_id] += c
         return vectors
 
-    idxnm = search.index_name(kb.tenant_id)
+    idxnm = search.index_name()
     try_create_idx = True
 
-    _, tenant = TenantService.get_by_id(kb.tenant_id)
     tenant_llm_config = get_tenant_default_model_by_type(LLMType.CHAT)
     llm_bdl = LLMBundle(tenant_llm_config)
     for doc_id in docids:
