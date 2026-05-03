@@ -34,7 +34,7 @@ class DocMetadataService:
         Returns:
             Index name for document metadata
         """
-        return f"RAG-MedQA_doc_meta_{tenant_id}"
+        return "ragmedqa_doc_meta"
 
     @staticmethod
     def _extract_metadata(flat_meta: Dict) -> Dict:

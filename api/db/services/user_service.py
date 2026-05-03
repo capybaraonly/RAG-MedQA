@@ -7,8 +7,8 @@ import peewee
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from api.db import UserTenantRole
-from api.db.db_models import DB, UserTenant
-from api.db.db_models import User, Tenant
+from api.db.db_models import DB
+from api.db.db_models import User
 from api.db.services.common_service import CommonService
 from common.misc_utils import get_uuid
 from common.time_utils import current_timestamp, datetime_format
@@ -154,161 +154,91 @@ class UserService(CommonService):
         return list(users)
 
 
-class TenantService(CommonService):
-    """Service class for managing tenant-related database operations.
-
-    This class extends CommonService to provide functionality for tenant management,
-    including tenant information retrieval and credit management.
-
-    Attributes:
-        model: The Tenant model class for database operations.
-    """
-    model = Tenant
+class TenantService:
+    """Stub: Tenant table removed in tenant-less architecture."""
 
     @classmethod
-    @DB.connection_context()
     def get_info_by(cls, user_id):
-        fields = [
-            cls.model.id.alias("tenant_id"),
-            cls.model.name,
-            cls.model.llm_id,
-            cls.model.embd_id,
-            cls.model.rerank_id,
-            cls.model.asr_id,
-            cls.model.img2txt_id,
-            cls.model.tts_id,
-            cls.model.parser_ids,
-            UserTenant.role]
-        return list(cls.model.select(*fields)
-                    .join(UserTenant, on=((cls.model.id == UserTenant.tenant_id) & (UserTenant.user_id == user_id) & (UserTenant.status == StatusEnum.VALID.value)))
-                    .where(cls.model.status == StatusEnum.VALID.value).dicts())
+        from common.constants import SYSTEM_TENANT_ID
+        return [{"tenant_id": SYSTEM_TENANT_ID, "name": "Default", "role": "owner"}]
 
     @classmethod
-    @DB.connection_context()
     def get_joined_tenants_by_user_id(cls, user_id):
-        fields = [
-            cls.model.id.alias("tenant_id"),
-            cls.model.name,
-            cls.model.llm_id,
-            cls.model.embd_id,
-            cls.model.asr_id,
-            cls.model.img2txt_id,
-            UserTenant.role]
-        return list(cls.model.select(*fields)
-                    .join(UserTenant, on=((cls.model.id == UserTenant.tenant_id) & (UserTenant.user_id == user_id) & (UserTenant.status == StatusEnum.VALID.value) & (UserTenant.role == UserTenantRole.NORMAL)))
-                    .where(cls.model.status == StatusEnum.VALID.value).dicts())
+        from common.constants import SYSTEM_TENANT_ID
+        return [{"tenant_id": SYSTEM_TENANT_ID}]
 
     @classmethod
-    @DB.connection_context()
     def decrease(cls, user_id, num):
-        num = cls.model.update(credit=cls.model.credit - num).where(
-            cls.model.id == user_id).execute()
-        if num == 0:
-            raise LookupError("Tenant not found which is supposed to be there")
+        pass
 
     @classmethod
-    @DB.connection_context()
     def user_gateway(cls, tenant_id):
+        import hashlib
         hash_obj = hashlib.sha256(tenant_id.encode("utf-8"))
-        return int(hash_obj.hexdigest(), 16)%len(settings.MINIO)
+        return int(hash_obj.hexdigest(), 16) % len(settings.MINIO) if settings.MINIO else 0
 
     @classmethod
-    @DB.connection_context()
     def get_null_tenant_model_id_rows(cls):
-        objs = cls.model.select().orwhere(cls.model.tenant_llm_id.is_null(), cls.model.tenant_embd_id.is_null(), cls.model.tenant_asr_id.is_null(), cls.model.tenant_tts_id.is_null(), cls.model.tenant_rerank_id.is_null(), cls.model.tenant_img2txt_id.is_null())
-        return list(objs)
-
-
-class UserTenantService(CommonService):
-    """Service class for managing user-tenant relationship operations.
-
-    This class extends CommonService to handle the many-to-many relationship
-    between users and tenants, managing user roles and tenant memberships.
-
-    Attributes:
-        model: The UserTenant model class for database operations.
-    """
-    model = UserTenant
+        return []
 
     @classmethod
-    @DB.connection_context()
-    def filter_by_id(cls, user_tenant_id):
-        try:
-            user_tenant = cls.model.select().where((cls.model.id == user_tenant_id) & (cls.model.status == StatusEnum.VALID.value)).get()
-            return user_tenant
-        except peewee.DoesNotExist:
-            return None
+    def get_by_id(cls, id):
+        from common.constants import SYSTEM_TENANT_ID
+        return True, type("TenantStub", (), {"id": SYSTEM_TENANT_ID, "embd_id": "", "asr_id": "", "img2txt_id": "", "llm_id": "", "rerank_id": "", "tts_id": ""})()
 
     @classmethod
-    @DB.connection_context()
-    def save(cls, **kwargs):
-        if "id" not in kwargs:
-            kwargs["id"] = get_uuid()
-        obj = cls.model(**kwargs).save(force_insert=True)
-        return obj
+    def insert(cls, **kwargs):
+        pass
 
     @classmethod
-    @DB.connection_context()
-    def get_by_tenant_id(cls, tenant_id):
-        fields = [
-            cls.model.id,
-            cls.model.user_id,
-            cls.model.status,
-            cls.model.role,
-            User.nickname,
-            User.email,
-            User.avatar,
-            User.is_authenticated,
-            User.is_active,
-            User.is_anonymous,
-            User.status,
-            User.update_date,
-            User.is_superuser]
-        return list(cls.model.select(*fields)
-                    .join(User, on=((cls.model.user_id == User.id) & (cls.model.status == StatusEnum.VALID.value) & (cls.model.role != UserTenantRole.OWNER)))
-                    .where(cls.model.tenant_id == tenant_id)
-                    .dicts())
+    def delete_by_id(cls, id):
+        pass
 
     @classmethod
-    @DB.connection_context()
+    def update_by_id(cls, id, updates):
+        pass
+
+    @classmethod
+    def filter_update(cls, conditions, updates):
+        return 0
+
+
+class UserTenantService:
+    """Stub: UserTenant table removed in tenant-less architecture."""
+
+    @classmethod
+    def query(cls, **kwargs):
+        return []
+
+    @classmethod
     def get_tenants_by_user_id(cls, user_id):
-        fields = [
-            cls.model.tenant_id,
-            cls.model.role,
-            User.nickname,
-            User.email,
-            User.avatar,
-            User.update_date
-        ]
-        return list(cls.model.select(*fields)
-                    .join(User, on=((cls.model.tenant_id == User.id) & (UserTenant.user_id == user_id) & (UserTenant.status == StatusEnum.VALID.value)))
-                    .where(cls.model.status == StatusEnum.VALID.value).dicts())
+        from common.constants import SYSTEM_TENANT_ID
+        return [{"tenant_id": SYSTEM_TENANT_ID}]
 
     @classmethod
-    @DB.connection_context()
     def get_user_tenant_relation_by_user_id(cls, user_id):
-        fields = [
-            cls.model.id,
-            cls.model.user_id,
-            cls.model.tenant_id,
-            cls.model.role
-        ]
-        return list(cls.model.select(*fields).where(cls.model.user_id == user_id).dicts().dicts())
+        return []
 
     @classmethod
-    @DB.connection_context()
-    def get_num_members(cls, user_id: str):
-        cnt_members = cls.model.select(peewee.fn.COUNT(cls.model.id)).where(cls.model.tenant_id == user_id).scalar()
-        return cnt_members
+    def insert(cls, **kwargs):
+        pass
 
     @classmethod
-    @DB.connection_context()
-    def filter_by_tenant_and_user_id(cls, tenant_id, user_id):
-        try:
-            user_tenant = cls.model.select().where(
-                (cls.model.tenant_id == tenant_id) & (cls.model.status == StatusEnum.VALID.value) &
-                (cls.model.user_id == user_id)
-            ).first()
-            return user_tenant
-        except peewee.DoesNotExist:
-            return None
+    def delete_by_id(cls, id):
+        pass
+
+    @classmethod
+    def delete_by_ids(cls, ids):
+        pass
+
+    @classmethod
+    def save(cls, **kwargs):
+        pass
+
+    @classmethod
+    def filter_delete(cls, conditions):
+        return 0
+
+    @classmethod
+    def filter_update(cls, conditions, updates):
+        return 0

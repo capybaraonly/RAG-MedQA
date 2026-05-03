@@ -10,8 +10,9 @@ from api.common.check_team_permission import admin_required
 from api.db.services.tenant_llm_service import LLMFactoriesService, TenantLLMService
 from api.db.services.llm_service import LLMService
 from api.utils.api_utils import get_allowed_llm_factories, get_data_error_result, get_json_result, get_request_json, server_error_response, validate_request
-from common.constants import StatusEnum, LLMType
-from api.db.db_models import TenantLLM
+from common.constants import StatusEnum, LLMType, SYSTEM_TENANT_ID
+
+
 from rag.utils.base64_image import test_image
 from rag.llm import EmbeddingModel, ChatModel, RerankModel, CvModel, TTSModel, OcrModel, Seq2txtModel
 
@@ -130,9 +131,9 @@ async def set_api_key():
 
     for llm in source_llms:
         llm_config["max_tokens"] = llm.max_tokens
-        if not TenantLLMService.filter_update([TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == factory, TenantLLM.llm_name == llm.llm_name], llm_config):
+        if not TenantLLMService.filter_update([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == factory, TenantLLM.llm_name == llm.llm_name], llm_config):
             TenantLLMService.save(
-                tenant_id=current_user.id,
+                tenant_id=SYSTEM_TENANT_ID,
                 llm_factory=factory,
                 llm_name=llm.llm_name,
                 model_type=llm.model_type,
@@ -216,7 +217,7 @@ async def add_llm():
         api_key = apikey_json(["api_key", "provider_order"])
 
     llm = {
-        "tenant_id": current_user.id,
+        "tenant_id": SYSTEM_TENANT_ID,
         "llm_factory": factory,
         "model_type": req["model_type"],
         "llm_name": llm_name,
@@ -339,7 +340,7 @@ async def add_llm():
     if msg:
         return get_data_error_result(message=msg)
 
-    if not TenantLLMService.filter_update([TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == factory, TenantLLM.llm_name == llm["llm_name"]], llm):
+    if not TenantLLMService.filter_update([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == factory, TenantLLM.llm_name == llm["llm_name"]], llm):
         TenantLLMService.save(**llm)
 
     return get_json_result(data=True)
@@ -351,7 +352,7 @@ async def add_llm():
 @validate_request("llm_factory", "llm_name")
 async def delete_llm():
     req = await get_request_json()
-    TenantLLMService.filter_delete([TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == req["llm_factory"], TenantLLM.llm_name == req["llm_name"]])
+    TenantLLMService.filter_delete([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == req["llm_factory"], TenantLLM.llm_name == req["llm_name"]])
     return get_json_result(data=True)
 
 
@@ -362,7 +363,7 @@ async def delete_llm():
 async def enable_llm():
     req = await get_request_json()
     TenantLLMService.filter_update(
-        [TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == req["llm_factory"], TenantLLM.llm_name == req["llm_name"]], {"status": str(req.get("status", "1"))}
+        [TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == req["llm_factory"], TenantLLM.llm_name == req["llm_name"]], {"status": str(req.get("status", "1"))}
     )
     return get_json_result(data=True)
 
@@ -373,7 +374,7 @@ async def enable_llm():
 @validate_request("llm_factory")
 async def delete_factory():
     req = await get_request_json()
-    TenantLLMService.filter_delete([TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == req["llm_factory"]])
+    TenantLLMService.filter_delete([TenantLLM.tenant_id == SYSTEM_TENANT_ID, TenantLLM.llm_factory == req["llm_factory"]])
     return get_json_result(data=True)
 
 
@@ -381,12 +382,12 @@ async def delete_factory():
 @login_required
 def my_llms():
     try:
-        TenantLLMService.ensure_mineru_from_env(current_user.id)
+        TenantLLMService.ensure_mineru_from_env(SYSTEM_TENANT_ID)
         include_details = request.args.get("include_details", "false").lower() == "true"
 
         if include_details:
             res = {}
-            objs = TenantLLMService.query(tenant_id=current_user.id)
+            objs = TenantLLMService.query(tenant_id=SYSTEM_TENANT_ID)
             factories = LLMFactoriesService.query(status=StatusEnum.VALID.value)
 
             for o in objs:
@@ -413,7 +414,7 @@ def my_llms():
                 )
         else:
             res = {}
-            for o in TenantLLMService.get_my_llms(current_user.id):
+            for o in TenantLLMService.get_my_llms(SYSTEM_TENANT_ID):
                 if o["llm_factory"] not in res:
                     res[o["llm_factory"]] = {"tags": o["tags"], "llm": []}
                 res[o["llm_factory"]]["llm"].append({"id": o["id"], "type": o["model_type"], "name": o["llm_name"], "used_token": o["used_tokens"], "status": o["status"]})
@@ -429,7 +430,7 @@ async def list_app():
     self_deployed = ["FastEmbed", "Ollama", "Xinference", "LocalAI", "LM-Studio", "GPUStack"]
     weighted = []
     model_type = request.args.get("model_type")
-    tenant_id = current_user.id
+    tenant_id = SYSTEM_TENANT_ID
     try:
         TenantLLMService.ensure_mineru_from_env(tenant_id)
         objs = TenantLLMService.query(tenant_id=tenant_id)

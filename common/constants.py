@@ -7,6 +7,8 @@ from strenum import StrEnum
 
 SERVICE_CONF = "service_conf.yaml"
 RAG_FLOW_SERVICE_NAME = "RAG-MedQA"
+SYSTEM_TENANT_ID = "system00000000000000000000000000"   # 32 位固定 ID，作为过渡占位
+SYSTEM_INDEX_NAME = "ragmedqa"                           # 单一 ES 索引名
 SANDBOX_ARTIFACT_BUCKET = os.environ.get("SANDBOX_ARTIFACT_BUCKET", "sandbox-artifacts")
 SANDBOX_ARTIFACT_EXPIRE_DAYS = int(os.environ.get("SANDBOX_ARTIFACT_EXPIRE_DAYS", "7"))
 

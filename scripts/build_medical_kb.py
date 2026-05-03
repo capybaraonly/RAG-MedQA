@@ -220,8 +220,8 @@ def build_qa_knowledge_base(
     chunks = chunk_qa_pairs(qa_pairs, tenant_id, kb_id)
     print(f"[QA] 已生成 {len(chunks)} 个 chunks，开始嵌入...")
 
-    emb_cfg = get_tenant_default_model_by_type(tenant_id, LLMType.EMBEDDING)
-    emb_model = LLMBundle(tenant_id, emb_cfg)
+    emb_cfg = get_tenant_default_model_by_type(LLMType.EMBEDDING)
+    emb_model = LLMBundle(emb_cfg)
     embed_and_index_chunks(
         chunks, emb_model, tenant_id, kb_id,
         ckpt_key=f"{kb_id}_qa",
@@ -263,8 +263,8 @@ def build_pdf_knowledge_base(
     ckpt = _load_ckpt(ckpt_key)
     done_files: set[str] = set(ckpt.get("done_files", []))
 
-    emb_cfg = get_tenant_default_model_by_type(tenant_id, LLMType.EMBEDDING)
-    emb_model = LLMBundle(tenant_id, emb_cfg)
+    emb_cfg = get_tenant_default_model_by_type(LLMType.EMBEDDING)
+    emb_model = LLMBundle(emb_cfg)
 
     for pdf_path in pdf_paths:
         fname = str(pdf_path)

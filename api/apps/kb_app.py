@@ -15,6 +15,7 @@ from api.db.services.pipeline_operation_log_service import PipelineOperationLogS
 from api.db.services.task_service import TaskService, GRAPH_RAPTOR_FAKE_DOC_ID
 from api.db.services.user_service import UserTenantService
 from api.db.joint_services.tenant_model_service import get_model_config_by_type_and_name, get_model_config_by_id
+from common.constants import SYSTEM_TENANT_ID
 from api.utils.api_utils import (
     get_error_data_result,
     server_error_response,
@@ -236,21 +237,9 @@ async def list_kbs():
     req = await get_request_json()
     owner_ids = req.get("owner_ids", [])
     try:
-        if not owner_ids:
-            tenants = TenantService.get_joined_tenants_by_user_id(current_user.id)
-            tenants = [m["tenant_id"] for m in tenants]
-            kbs, total = KnowledgebaseService.get_by_tenant_ids(
-                tenants, current_user.id, page_number,
-                items_per_page, orderby, desc, keywords, parser_id)
-        else:
-            tenants = owner_ids
-            kbs, total = KnowledgebaseService.get_by_tenant_ids(
-                tenants, current_user.id, 0,
-                0, orderby, desc, keywords, parser_id)
-            kbs = [kb for kb in kbs if kb["tenant_id"] in tenants]
-            total = len(kbs)
-            if page_number and items_per_page:
-                kbs = kbs[(page_number-1)*items_per_page:page_number*items_per_page]
+        kbs, total = KnowledgebaseService.get_list(
+            [SYSTEM_TENANT_ID], current_user.id, page_number,
+            items_per_page, orderby, desc, parser_id, None, keywords)
         return get_json_result(data={"kbs": kbs, "total": total})
     except Exception as e:
         return server_error_response(e)
@@ -329,7 +318,7 @@ def list_tags(kb_id):
     tenants = UserTenantService.get_tenants_by_user_id(current_user.id)
     tags = []
     for tenant in tenants:
-        tags += settings.retriever.all_tags(tenant["tenant_id"], [kb_id])
+        tags += settings.retriever.all_tags([kb_id])
     return get_json_result(data=tags)
 
 
@@ -348,7 +337,7 @@ def list_tags_from_kbs():
     tenants = UserTenantService.get_tenants_by_user_id(current_user.id)
     tags = []
     for tenant in tenants:
-        tags += settings.retriever.all_tags(tenant["tenant_id"], kb_ids)
+        tags += settings.retriever.all_tags(kb_ids)
     return get_json_result(data=tags)
 
 
@@ -946,14 +935,14 @@ async def check_embedding():
     embd_id = req.get("embd_id", "")
     n = int(req.get("check_num", 5))
     _, kb = KnowledgebaseService.get_by_id(kb_id)
-    tenant_id = kb.tenant_id
+    tenant_id = kb.tenant_id if kb.tenant_id else SYSTEM_TENANT_ID
     if tenant_embd_id:
         embd_model_config = get_model_config_by_id(tenant_embd_id)
     elif embd_id:
-        embd_model_config = get_model_config_by_type_and_name(tenant_id, LLMType.EMBEDDING, embd_id)
+        embd_model_config = get_model_config_by_type_and_name(LLMType.EMBEDDING, embd_id)
     else:
         return get_error_data_result("`tenant_embd_id` or `embd_id` is required.")
-    emb_mdl = LLMBundle(tenant_id, embd_model_config)
+    emb_mdl = LLMBundle(embd_model_config)
     samples = sample_random_chunks_with_vectors(settings.docStoreConn, tenant_id=tenant_id, kb_id=kb_id, n=n)
 
     results, eff_sims = [], []

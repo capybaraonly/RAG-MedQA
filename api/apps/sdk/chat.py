@@ -22,24 +22,18 @@ from uuid import uuid4
 from quart import request
 
 from api.apps import current_user, login_required
-from api.db import UserTenantRole
 from api.db.db_models import Dialog, Conversation
 from api.db.services.dialog_service import DialogService
 from api.db.services.conversation_service import ConversationService, async_completion
-from api.db.services.user_service import TenantService, UserTenantService
 from api.utils.api_utils import (
     get_data_error_result,
     get_json_result,
     get_request_json,
     server_error_response,
 )
-from common.constants import RetCode, StatusEnum
+from common.constants import RetCode, StatusEnum, SYSTEM_TENANT_ID
 from common.misc_utils import get_uuid
 
-
-def _get_tenant_ids(user_id):
-    tenants = TenantService.get_joined_tenants_by_user_id(user_id)
-    return [m["tenant_id"] for m in tenants]
 
 
 def _dialog_to_frontend(d):
@@ -59,16 +53,12 @@ def chats_list():
         chat_id = request.args.get("id")
         name = request.args.get("name")
 
-        joined_tenant_ids = _get_tenant_ids(current_user.id)
-
-        dialogs, total = DialogService.get_by_tenant_ids(
-            joined_tenant_ids=joined_tenant_ids,
-            user_id=current_user.id,
+        dialogs, total = DialogService.get_list(
+            tenant_id=SYSTEM_TENANT_ID,
             page_number=page,
             items_per_page=page_size,
             orderby=orderby,
             desc=desc,
-            keywords=keywords,
             id=chat_id,
             name=name,
         )
@@ -94,7 +84,7 @@ async def chats_create():
         chat_id = get_uuid()
         dialog = {
             "id": chat_id,
-            "tenant_id": current_user.id,
+            "tenant_id": SYSTEM_TENANT_ID,
             "name": name,
             "description": description,
             "icon": icon,
@@ -123,7 +113,7 @@ def chats_get(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != current_user.id:
+        if chat.tenant_id != SYSTEM_TENANT_ID:
             return get_data_error_result(message="No authorization")
         data = _dialog_to_frontend(chat.to_dict())
         return get_json_result(data=data)
@@ -138,7 +128,7 @@ async def chats_update(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != current_user.id:
+        if chat.tenant_id != SYSTEM_TENANT_ID:
             return get_data_error_result(message="No authorization")
 
         req = await get_request_json()
@@ -162,7 +152,7 @@ def chats_delete(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != current_user.id:
+        if chat.tenant_id != SYSTEM_TENANT_ID:
             return get_data_error_result(message="No authorization")
         DialogService.delete_by_id(chat_id)
         return get_json_result(data=True)
@@ -177,7 +167,7 @@ def sessions_list(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != current_user.id:
+        if chat.tenant_id != SYSTEM_TENANT_ID:
             return get_data_error_result(message="No authorization")
 
         page = int(request.args.get("page", 1))
@@ -208,7 +198,7 @@ async def sessions_create(chat_id):
         ok, chat = DialogService.get_by_id(chat_id)
         if not ok:
             return get_data_error_result(message="Chat not found")
-        if chat.tenant_id != current_user.id:
+        if chat.tenant_id != SYSTEM_TENANT_ID:
             return get_data_error_result(message="No authorization")
 
         req = await get_request_json()
@@ -273,11 +263,9 @@ async def chats_ask():
         if not chat_id:
             return get_data_error_result(message="chat_id is required")
 
-        tenant_id = current_user.id
 
         async def generate():
             async for ans in async_completion(
-                tenant_id=tenant_id,
                 chat_id=chat_id,
                 question=question,
                 name=name,

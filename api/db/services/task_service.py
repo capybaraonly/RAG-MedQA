@@ -10,7 +10,7 @@ from parser import PdfParser, total_page_number
 from peewee import JOIN
 from api.db.db_models import DB, File2Document, File
 from api.db import FileType
-from api.db.db_models import Task, Document, Knowledgebase, Tenant
+from api.db.db_models import Task, Document, Knowledgebase
 from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from common.misc_utils import get_uuid

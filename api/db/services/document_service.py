@@ -14,7 +14,7 @@ from peewee import fn, Case, JOIN
 
 from api.constants import IMG_BASE64_PREFIX, FILE_NAME_LEN_LIMIT
 from api.db import PIPELINE_SPECIAL_PROGRESS_FREEZE_TASK_TYPES, FileType, UserTenantRole, CanvasCategory
-from api.db.db_models import DB, Document, Knowledgebase, Task, Tenant, UserTenant, File2Document, File, UserCanvas, User
+from api.db.db_models import DB, Document, Knowledgebase, Task, File2Document, File, UserCanvas, User
 from api.db.db_utils import bulk_insert_into_db
 from api.db.services.common_service import CommonService, retry_deadlock_operation
 from api.db.services.knowledgebase_service import KnowledgebaseService
@@ -1040,8 +1040,8 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     if kb.tenant_embd_id:
         embd_model_config = get_model_config_by_id(kb.tenant_embd_id)
     else:
-        embd_model_config = get_model_config_by_type_and_name(kb.tenant_id, LLMType.EMBEDDING, kb.embd_id)
-    embd_mdl = LLMBundle(kb.tenant_id, embd_model_config, lang=kb.language)
+        embd_model_config = get_model_config_by_type_and_name(LLMType.EMBEDDING, kb.embd_id)
+    embd_mdl = LLMBundle(embd_model_config, lang=kb.language)
 
     err, files = FileService.upload_document(kb, file_objs, user_id)
     assert not err, "\n".join(err)
@@ -1104,8 +1104,8 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     try_create_idx = True
 
     _, tenant = TenantService.get_by_id(kb.tenant_id)
-    tenant_llm_config = get_tenant_default_model_by_type(kb.tenant_id, LLMType.CHAT)
-    llm_bdl = LLMBundle(kb.tenant_id, tenant_llm_config)
+    tenant_llm_config = get_tenant_default_model_by_type(LLMType.CHAT)
+    llm_bdl = LLMBundle(tenant_llm_config)
     for doc_id in docids:
         cks = [c for c in docs if c["doc_id"] == doc_id]
 

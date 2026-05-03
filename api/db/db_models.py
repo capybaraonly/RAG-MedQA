@@ -719,40 +719,14 @@ class User(DataBaseModel, AuthUser):
         db_table = "user"
 
 
-class Tenant(DataBaseModel):
-    id = CharField(max_length=32, primary_key=True)
-    name = CharField(max_length=100, null=True, help_text="Tenant name", index=True)
-    public_key = CharField(max_length=255, null=True, index=True)
-    llm_id = CharField(max_length=128, null=False, help_text="default llm ID", index=True)
-    tenant_llm_id = IntegerField(null=True, help_text="id in tenant_llm", index=True)
-    embd_id = CharField(max_length=128, null=False, help_text="default embedding model ID", index=True)
-    tenant_embd_id = IntegerField(null=True, help_text="id in tenant_llm", index=True)
-    asr_id = CharField(max_length=128, null=False, help_text="default ASR model ID", index=True)
-    tenant_asr_id = IntegerField(null=True, help_text="id in tenant_llm", index=True)
-    img2txt_id = CharField(max_length=128, null=False, help_text="default image to text model ID", index=True)
-    tenant_img2txt_id = IntegerField(null=True, help_text="id in tenant_llm", index=True)
-    rerank_id = CharField(max_length=128, null=False, help_text="default rerank model ID", index=True)
-    tenant_rerank_id = IntegerField(null=True, help_text="id in tenant_llm", index=True)
-    tts_id = CharField(max_length=256, null=True, help_text="default tts model ID", index=True)
-    tenant_tts_id = IntegerField(null=True, help_text="id in tenant_llm", index=True)
-    parser_ids = CharField(max_length=256, null=False, help_text="document processors", index=True)
-    credit = IntegerField(default=512, index=True)
-    status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
+
+class AppConfig(DataBaseModel):
+    """全局系统配置，替代 Tenant + TenantLLM"""
+    key = CharField(max_length=128, primary_key=True)
+    value = JSONField(null=True)
 
     class Meta:
-        db_table = "tenant"
-
-
-class UserTenant(DataBaseModel):
-    id = CharField(max_length=32, primary_key=True)
-    user_id = CharField(max_length=32, null=False, index=True)
-    tenant_id = CharField(max_length=32, null=False, index=True)
-    role = CharField(max_length=32, null=False, help_text="UserTenantRole", index=True)
-    invited_by = CharField(max_length=32, null=False, index=True)
-    status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
-
-    class Meta:
-        db_table = "user_tenant"
+        db_table = "app_config"
 
 
 class InvitationCode(DataBaseModel):
@@ -760,7 +734,7 @@ class InvitationCode(DataBaseModel):
     code = CharField(max_length=32, null=False, index=True)
     visit_time = DateTimeField(null=True, index=True)
     user_id = CharField(max_length=32, null=True, index=True)
-    tenant_id = CharField(max_length=32, null=True, index=True)
+
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
     class Meta:
@@ -800,45 +774,11 @@ class LLM(DataBaseModel):
         db_table = "llm"
 
 
-class TenantLLM(DataBaseModel):
-    id = PrimaryKeyField()
-    tenant_id = CharField(max_length=32, null=False, index=True)
-    llm_factory = CharField(max_length=128, null=False, help_text="LLM factory name", index=True)
-    model_type = CharField(max_length=128, null=True, help_text="LLM, Text Embedding, Image2Text, ASR", index=True)
-    llm_name = CharField(max_length=128, null=True, help_text="LLM name", default="", index=True)
-    api_key = TextField(null=True, help_text="API KEY")
-    api_base = CharField(max_length=255, null=True, help_text="API Base")
-    max_tokens = IntegerField(default=8192, help_text="Max context token num", index=True)
-    used_tokens = IntegerField(default=0, help_text="Used token num", index=True)
-    status = CharField(max_length=1, null=False, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
-
-    def __str__(self):
-        return self.llm_name
-
-    class Meta:
-        db_table = "tenant_llm"
-        indexes = (
-            (("tenant_id", "llm_factory", "llm_name"), True),
-        )
-
-
-class TenantLangfuse(DataBaseModel):
-    tenant_id = CharField(max_length=32, null=False, primary_key=True)
-    secret_key = CharField(max_length=2048, null=False, help_text="SECRET KEY", index=True)
-    public_key = CharField(max_length=2048, null=False, help_text="PUBLIC KEY", index=True)
-    host = CharField(max_length=128, null=False, help_text="HOST", index=True)
-
-    def __str__(self):
-        return "Langfuse host" + self.host
-
-    class Meta:
-        db_table = "tenant_langfuse"
-
 
 class Knowledgebase(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
     avatar = TextField(null=True, help_text="avatar base64 string")
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     name = CharField(max_length=128, null=False, help_text="KB name", index=True)
     language = CharField(max_length=32, null=True, default="Chinese" if "zh_CN" in os.getenv("LANG", "") else "English", help_text="English|Chinese", index=True)
     description = TextField(null=True, help_text="KB description")
@@ -906,7 +846,7 @@ class Document(DataBaseModel):
 class File(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
     parent_id = CharField(max_length=32, null=False, help_text="parent folder id", index=True)
-    tenant_id = CharField(max_length=32, null=False, help_text="tenant id", index=True)
+
     created_by = CharField(max_length=32, null=False, help_text="who created it", index=True)
     name = CharField(max_length=255, null=False, help_text="file name or folder name", index=True)
     location = CharField(max_length=255, null=True, help_text="where dose it store", index=True)
@@ -947,7 +887,7 @@ class Task(DataBaseModel):
 
 class Dialog(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     name = CharField(max_length=255, null=True, help_text="dialog application name", index=True)
     description = TextField(null=True, help_text="Dialog description")
     icon = TextField(null=True, help_text="icon base64 string")
@@ -994,7 +934,7 @@ class Conversation(DataBaseModel):
 
 
 class APIToken(DataBaseModel):
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     token = CharField(max_length=255, null=False, index=True)
     dialog_id = CharField(max_length=32, null=True, index=True)
     source = CharField(max_length=16, null=True, help_text="none|agent|dialog", index=True)
@@ -1002,7 +942,7 @@ class APIToken(DataBaseModel):
 
     class Meta:
         db_table = "api_token"
-        primary_key = CompositeKey("tenant_id", "token")
+        primary_key = CompositeKey("token")
 
 
 class API4Conversation(DataBaseModel):
@@ -1072,7 +1012,7 @@ class UserCanvasVersion(DataBaseModel):
 class MCPServer(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
     name = CharField(max_length=255, null=False, help_text="MCP Server name")
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     url = CharField(max_length=2048, null=False, help_text="MCP Server URL")
     server_type = CharField(max_length=32, null=False, help_text="MCP Server type")
     description = TextField(null=True, help_text="MCP Server description")
@@ -1086,7 +1026,7 @@ class MCPServer(DataBaseModel):
 class Search(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
     avatar = TextField(null=True, help_text="avatar base64 string")
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     name = CharField(max_length=128, null=False, help_text="Search name", index=True)
     description = TextField(null=True, help_text="KB description")
     created_by = CharField(max_length=32, null=False, index=True)
@@ -1131,7 +1071,7 @@ class Search(DataBaseModel):
 class PipelineOperationLog(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
     document_id = CharField(max_length=32, index=True)
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     kb_id = CharField(max_length=32, null=False, index=True)
     pipeline_id = CharField(max_length=32, null=True, help_text="Pipeline ID", index=True)
     pipeline_title = CharField(max_length=32, null=True, help_text="Pipeline title", index=True)
@@ -1156,7 +1096,7 @@ class PipelineOperationLog(DataBaseModel):
 
 class Connector(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     name = CharField(max_length=128, null=False, help_text="Search name", index=False)
     source = CharField(max_length=128, null=False, help_text="Data source", index=True)
     input_type = CharField(max_length=128, null=False, help_text="poll/event/..", index=True)
@@ -1225,75 +1165,11 @@ class SyncLogs(DataBaseModel):
         db_table = "sync_logs"
 
 
-class EvaluationDataset(DataBaseModel):
-    """Ground truth dataset for RAG evaluation"""
-    id = CharField(max_length=32, primary_key=True)
-    tenant_id = CharField(max_length=32, null=False, index=True, help_text="tenant ID")
-    name = CharField(max_length=255, null=False, index=True, help_text="dataset name")
-    description = TextField(null=True, help_text="dataset description")
-    kb_ids = JSONField(null=False, help_text="knowledge base IDs to evaluate against")
-    created_by = CharField(max_length=32, null=False, index=True, help_text="creator user ID")
-    create_time = BigIntegerField(null=False, index=True, help_text="creation timestamp")
-    update_time = BigIntegerField(null=False, help_text="last update timestamp")
-    status = IntegerField(null=False, default=1, help_text="1=valid, 0=invalid")
-
-    class Meta:
-        db_table = "evaluation_datasets"
-
-
-class EvaluationCase(DataBaseModel):
-    """Individual test case in an evaluation dataset"""
-    id = CharField(max_length=32, primary_key=True)
-    dataset_id = CharField(max_length=32, null=False, index=True, help_text="FK to evaluation_datasets")
-    question = TextField(null=False, help_text="test question")
-    reference_answer = TextField(null=True, help_text="optional ground truth answer")
-    relevant_doc_ids = JSONField(null=True, help_text="expected relevant document IDs")
-    relevant_chunk_ids = JSONField(null=True, help_text="expected relevant chunk IDs")
-    metadata = JSONField(null=True, help_text="additional context/tags")
-    create_time = BigIntegerField(null=False, help_text="creation timestamp")
-
-    class Meta:
-        db_table = "evaluation_cases"
-
-
-class EvaluationRun(DataBaseModel):
-    """A single evaluation run"""
-    id = CharField(max_length=32, primary_key=True)
-    dataset_id = CharField(max_length=32, null=False, index=True, help_text="FK to evaluation_datasets")
-    dialog_id = CharField(max_length=32, null=False, index=True, help_text="dialog configuration being evaluated")
-    name = CharField(max_length=255, null=False, help_text="run name")
-    config_snapshot = JSONField(null=False, help_text="dialog config at time of evaluation")
-    metrics_summary = JSONField(null=True, help_text="aggregated metrics")
-    status = CharField(max_length=32, null=False, default="PENDING", help_text="PENDING/RUNNING/COMPLETED/FAILED")
-    created_by = CharField(max_length=32, null=False, index=True, help_text="user who started the run")
-    create_time = BigIntegerField(null=False, index=True, help_text="creation timestamp")
-    complete_time = BigIntegerField(null=True, help_text="completion timestamp")
-
-    class Meta:
-        db_table = "evaluation_runs"
-
-
-class EvaluationResult(DataBaseModel):
-    """Result for a single test case in an evaluation run"""
-    id = CharField(max_length=32, primary_key=True)
-    run_id = CharField(max_length=32, null=False, index=True, help_text="FK to evaluation_runs")
-    case_id = CharField(max_length=32, null=False, index=True, help_text="FK to evaluation_cases")
-    generated_answer = TextField(null=False, help_text="generated answer")
-    retrieved_chunks = JSONField(null=False, help_text="chunks that were retrieved")
-    metrics = JSONField(null=False, help_text="all computed metrics")
-    execution_time = FloatField(null=False, help_text="response time in seconds")
-    token_usage = JSONField(null=True, help_text="prompt/completion tokens")
-    create_time = BigIntegerField(null=False, help_text="creation timestamp")
-
-    class Meta:
-        db_table = "evaluation_results"
-
-
 class Memory(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
     name = CharField(max_length=128, null=False, index=False, help_text="Memory name")
     avatar = TextField(null=True, help_text="avatar base64 string")
-    tenant_id = CharField(max_length=32, null=False, index=True)
+
     memory_type = IntegerField(null=False, default=1, index=True, help_text="Bit flags (LSB->MSB): 1=raw, 2=semantic, 4=episodic, 8=procedural. E.g., 5 enables raw + episodic.")
     storage_type = CharField(max_length=32, default='table', null=False, index=True, help_text="table|graph")
     embd_id = CharField(max_length=128, null=False, index=False, help_text="embedding model ID")
@@ -1427,159 +1303,20 @@ def migrate_add_unique_email(migrator):
 
 
 
-def update_tenant_llm_to_id_primary_key():
-    """Add ID and set to primary key step by step."""
-    if settings.DATABASE_TYPE.upper() == "POSTGRES":
-        _update_tenant_llm_to_id_primary_key_postgres()
-    else:
-        _update_tenant_llm_to_id_primary_key_mysql()
-
-
-def _update_tenant_llm_to_id_primary_key_mysql():
-    """MySQL implementation: Add ID column and set as AUTO_INCREMENT primary key."""
-    try:
-        with DB.atomic():
-            # 0. Check if 'id' column already exists
-            cursor = DB.execute_sql("""
-                            SELECT COLUMN_NAME
-                            FROM INFORMATION_SCHEMA.COLUMNS
-                            WHERE TABLE_SCHEMA = DATABASE()
-                            AND TABLE_NAME = 'tenant_llm'
-                            AND COLUMN_NAME = 'id'
-                        """)
-            if cursor.rowcount > 0:
-                return
-
-            # 1. Add nullable column
-            DB.execute_sql("ALTER TABLE tenant_llm ADD COLUMN temp_id INT NULL")
-
-            # 2. Set ID using MySQL user variables
-            DB.execute_sql("SET @row = 0;")
-            DB.execute_sql("UPDATE tenant_llm SET temp_id = (@row := @row + 1) ORDER BY tenant_id, llm_factory, llm_name;")
-
-            # 3. Drop old primary key
-            DB.execute_sql("ALTER TABLE tenant_llm DROP PRIMARY KEY")
-
-            # 4. Update ID column to primary key with AUTO_INCREMENT
-            DB.execute_sql("""
-            ALTER TABLE tenant_llm
-            MODIFY COLUMN temp_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY
-            """)
-
-            # 5. Add unique key
-            DB.execute_sql("""
-                ALTER TABLE tenant_llm
-                ADD CONSTRAINT uk_tenant_llm UNIQUE (tenant_id, llm_factory, llm_name)
-            """)
-
-            # 6. rename
-            DB.execute_sql("ALTER TABLE tenant_llm RENAME COLUMN temp_id TO id")
-
-            logging.info("Successfully updated tenant_llm to id primary key.")
-
-    except Exception as e:
-        logging.error(str(e))
-        cursor = DB.execute_sql("""
-                                    SELECT COLUMN_NAME
-                                    FROM INFORMATION_SCHEMA.COLUMNS
-                                    WHERE TABLE_SCHEMA = DATABASE()
-                                    AND TABLE_NAME = 'tenant_llm'
-                                    AND COLUMN_NAME = 'temp_id'
-                                """)
-        if cursor.rowcount > 0:
-            DB.execute_sql("ALTER TABLE tenant_llm DROP COLUMN temp_id")
-
-
-def _update_tenant_llm_to_id_primary_key_postgres():
-    """PostgreSQL implementation: Add SERIAL primary key column to tenant_llm."""
-    try:
-        with DB.atomic():
-            # 0. Check if 'id' column already exists
-            cursor = DB.execute_sql("""
-                            SELECT column_name
-                            FROM information_schema.columns
-                            WHERE table_catalog = current_database()
-                            AND table_name = 'tenant_llm'
-                            AND column_name = 'id'
-                        """)
-            if cursor.rowcount > 0:
-                return
-
-            # 1. Add nullable integer column
-            DB.execute_sql("ALTER TABLE tenant_llm ADD COLUMN temp_id INTEGER NULL")
-
-            # 2. Assign sequential row numbers ordered consistently
-            DB.execute_sql("""
-                UPDATE tenant_llm
-                SET temp_id = subq.rn
-                FROM (
-                    SELECT ctid,
-                           ROW_NUMBER() OVER (ORDER BY tenant_id, llm_factory, llm_name) AS rn
-                    FROM tenant_llm
-                ) AS subq
-                WHERE tenant_llm.ctid = subq.ctid
-            """)
-
-            # 3. Drop old composite primary key constraint
-            cursor = DB.execute_sql("""
-                SELECT constraint_name
-                FROM information_schema.table_constraints
-                WHERE table_catalog = current_database()
-                  AND table_name = 'tenant_llm'
-                  AND constraint_type = 'PRIMARY KEY'
-            """)
-            row = cursor.fetchone()
-            if row:
-                DB.execute_sql(f'ALTER TABLE tenant_llm DROP CONSTRAINT "{row[0]}"')
-
-            # 4. Make temp_id NOT NULL and create a sequence for it
-            DB.execute_sql("ALTER TABLE tenant_llm ALTER COLUMN temp_id SET NOT NULL")
-            DB.execute_sql("CREATE SEQUENCE IF NOT EXISTS tenant_llm_id_seq")
-            DB.execute_sql("""
-                SELECT setval('tenant_llm_id_seq', COALESCE((SELECT MAX(temp_id) FROM tenant_llm), 0))
-            """)
-            DB.execute_sql("ALTER TABLE tenant_llm ALTER COLUMN temp_id SET DEFAULT nextval('tenant_llm_id_seq')")
-            DB.execute_sql("ALTER SEQUENCE tenant_llm_id_seq OWNED BY tenant_llm.temp_id")
-            DB.execute_sql("ALTER TABLE tenant_llm ADD PRIMARY KEY (temp_id)")
-
-            # 5. Add unique constraint
-            DB.execute_sql("""
-                ALTER TABLE tenant_llm
-                ADD CONSTRAINT uk_tenant_llm UNIQUE (tenant_id, llm_factory, llm_name)
-            """)
-
-            # 6. Rename temp_id to id
-            DB.execute_sql("ALTER TABLE tenant_llm RENAME COLUMN temp_id TO id")
-
-            logging.info("Successfully updated tenant_llm to id primary key (PostgreSQL).")
-
-    except Exception as e:
-        logging.error(str(e))
-        cursor = DB.execute_sql("""
-                                    SELECT column_name
-                                    FROM information_schema.columns
-                                    WHERE table_catalog = current_database()
-                                    AND table_name = 'tenant_llm'
-                                    AND column_name = 'temp_id'
-                                """)
-        if cursor.rowcount > 0:
-            DB.execute_sql("ALTER TABLE tenant_llm DROP COLUMN temp_id")
-
-
 def migrate_db():
     logging.disable(logging.ERROR)
     migrator = DatabaseMigrator[settings.DATABASE_TYPE.upper()].value(DB)
     alter_db_add_column(migrator, "file", "source_type", CharField(max_length=128, null=False, default="", help_text="where dose this document come from", index=True))
-    alter_db_add_column(migrator, "tenant", "rerank_id", CharField(max_length=128, null=False, default="BAAI/bge-reranker-v2-m3", help_text="default rerank model ID"))
+
     alter_db_add_column(migrator, "dialog", "rerank_id", CharField(max_length=128, null=False, default="", help_text="default rerank model ID"))
     alter_db_column_type(migrator, "dialog", "top_k", IntegerField(default=1024))
-    alter_db_add_column(migrator, "tenant_llm", "api_key", CharField(max_length=2048, null=True, help_text="API KEY", index=True))
+
     alter_db_add_column(migrator, "api_token", "source", CharField(max_length=16, null=True, help_text="none|agent|dialog", index=True))
-    alter_db_add_column(migrator, "tenant", "tts_id", CharField(max_length=256, null=True, help_text="default tts model ID", index=True))
+
     alter_db_add_column(migrator, "api_4_conversation", "source", CharField(max_length=16, null=True, help_text="none|agent|dialog", index=True))
     alter_db_add_column(migrator, "task", "retry_count", IntegerField(default=0))
     alter_db_column_type(migrator, "api_token", "dialog_id", CharField(max_length=32, null=True, index=True))
-    alter_db_add_column(migrator, "tenant_llm", "max_tokens", IntegerField(default=8192, index=True))
+
     alter_db_add_column(migrator, "api_4_conversation", "dsl", JSONField(null=True, default={}))
     alter_db_add_column(migrator, "knowledgebase", "pagerank", IntegerField(default=0, index=False))
     alter_db_add_column(migrator, "api_token", "beta", CharField(max_length=255, null=True, index=True))
@@ -1618,13 +1355,7 @@ def migrate_db():
     # Migrate system_settings.value from CharField to TextField for longer sandbox configs
     alter_db_column_type(migrator, "system_settings", "value", TextField(null=False, help_text="Configuration value (JSON, string, etc.)"))
     alter_db_add_column(migrator, "document", "content_hash", CharField(max_length=32, null=True, help_text="xxhash128 of document content for change detection", default="", index=True))
-    update_tenant_llm_to_id_primary_key()
-    alter_db_add_column(migrator, "tenant", "tenant_llm_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
-    alter_db_add_column(migrator, "tenant", "tenant_embd_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
-    alter_db_add_column(migrator, "tenant", "tenant_asr_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
-    alter_db_add_column(migrator, "tenant", "tenant_img2txt_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
-    alter_db_add_column(migrator, "tenant", "tenant_rerank_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
-    alter_db_add_column(migrator, "tenant", "tenant_tts_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
+
     alter_db_add_column(migrator, "knowledgebase", "tenant_embd_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
     alter_db_add_column(migrator, "dialog", "tenant_llm_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
     alter_db_add_column(migrator, "dialog", "tenant_rerank_id", IntegerField(null=True, help_text="id in tenant_llm", index=True))
