@@ -269,15 +269,11 @@ class Dealer:
     def _rank_feature_scores(self, query_rfea, search_res):
         ## For rank feature(tag_fea) scores.
         rank_fea = []
-        pageranks = []
-        for chunk_id in search_res.ids:
-            pageranks.append(search_res.field[chunk_id].get(PAGERANK_FLD, 0))
-        pageranks = np.array(pageranks, dtype=float)
 
         if not query_rfea:
-            return np.array([0 for _ in range(len(search_res.ids))]) + pageranks
+            return np.array([0 for _ in range(len(search_res.ids))])
 
-        q_denor = np.sqrt(np.sum([s * s for t, s in query_rfea.items() if t != PAGERANK_FLD]))
+        q_denor = np.sqrt(np.sum([s * s for t, s in query_rfea.items()]))
         for i in search_res.ids:
             nor, denor = 0, 0
             if not search_res.field[i].get(TAG_FLD):
@@ -291,7 +287,7 @@ class Dealer:
                 rank_fea.append(0)
             else:
                 rank_fea.append(nor / np.sqrt(denor) / q_denor)
-        return np.array(rank_fea) * 10. + pageranks
+        return np.array(rank_fea) * 10.
 
     def rerank(self, sres, query, tkweight=0.3,
                vtweight=0.7, cfield="content_ltks",
@@ -332,10 +328,10 @@ class Dealer:
 
         return sim + rank_fea, tksim, vtsim
 
-    def rerank_by_model(self, rerank_mdl, sres, query, tkweight=0.3,
-                        vtweight=0.5, cfield="content_ltks",
+    def rerank_by_model(self, rerank_mdl, sres, query, tkweight=0.4,
+                        vtweight=0.6, cfield="content_ltks",
                         rank_feature: dict | None = None): # 用模型排序
-        # Composite scoring: 0.5 × BGE-reranker semantic + 0.3 × token Jaccard + 0.2 × PageRank
+        # Composite scoring: 0.6 × BGE-reranker semantic + 0.4 × token Jaccard
         _, keywords = self.qryr.question(query)
 
         for i in sres.ids:
@@ -352,17 +348,10 @@ class Dealer:
         tksim = self.qryr.token_similarity(keywords, ins_tw)
         vtsim, _ = rerank_mdl.similarity(query, [remove_redundant_spaces(" ".join(tks)) for tks in ins_tw])
 
-        # Extract PageRank scores separately for explicit weighting
-        pageranks = np.array(
-            [sres.field[chunk_id].get(PAGERANK_FLD, 0) for chunk_id in sres.ids], dtype=float
-        )
-        pr_max = pageranks.max()
-        pageranks_norm = pageranks / pr_max if pr_max > 0 else pageranks
-
-        # tag-feature bonus (additive, not part of the 3-component composite)
+        # tag-feature bonus (additive, not part of the 2-component composite)
         rank_fea = self._rank_feature_scores(rank_feature, sres) if rank_feature else np.zeros(len(sres.ids))
 
-        composite = vtweight * np.array(vtsim) + tkweight * np.array(tksim) + 0.2 * pageranks_norm
+        composite = vtweight * np.array(vtsim) + tkweight * np.array(tksim)
         return composite + rank_fea, tksim, vtsim
 
     def hybrid_similarity(self, ans_embd, ins_embd, ans, inst):
@@ -386,7 +375,7 @@ class Dealer:
             aggs=True,
             rerank_mdl=None,
             highlight=False,
-            rank_feature: dict | None = {PAGERANK_FLD: 10},
+            rank_feature: dict | None = None,
     ): # 顶层接口，对外暴露、提供完整检索服务
         ranks = {"total": 0, "chunks": [], "doc_aggs": {}}
         if not question:
