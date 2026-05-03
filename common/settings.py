@@ -227,9 +227,7 @@ def init_settings():
 
     global retriever, kg_retriever
     retriever = search.Dealer(docStoreConn)
-    from rag.graphrag import search as kg_search
-
-    kg_retriever = kg_search.KGSearch(docStoreConn)
+    kg_retriever = None
 
     global SANDBOX_HOST
     if int(os.environ.get("SANDBOX_ENABLED", "0")):

@@ -12,7 +12,7 @@ from timeit import default_timer as timer
 from langfuse import Langfuse
 from peewee import fn
 from api.db.services.file_service import FileService
-from common.constants import LLMType, ParserType, StatusEnum
+from common.constants import LLMType, StatusEnum
 from api.db.db_models import DB, Dialog
 from api.db.services.common_service import CommonService
 from api.db.services.doc_metadata_service import DocMetadataService
@@ -620,13 +620,6 @@ async def async_chat(dialog, messages, stream=True, **kwargs):
                 tav_res = tav.retrieve_chunks(" ".join(questions))
                 kbinfos["chunks"].extend(tav_res["chunks"])
                 kbinfos["doc_aggs"].extend(tav_res["doc_aggs"])
-            if prompt_config.get("use_kg"):
-                default_chat_model = get_tenant_default_model_by_type(dialog.tenant_id, LLMType.CHAT)
-                ck = await settings.kg_retriever.retrieval(" ".join(questions), tenant_ids, dialog.kb_ids, embd_mdl,
-                                                       LLMBundle(dialog.tenant_id, default_chat_model))
-                if ck["content_with_weight"]:
-                    kbinfos["chunks"].insert(0, ck)
-
     knowledges = kb_prompt(kbinfos, max_tokens)
     logging.debug("{}->{}".format(" ".join(questions), "\n->".join(knowledges)))
 
@@ -1364,8 +1357,7 @@ async def async_ask(question, kb_ids, tenant_id, chat_llm_name=None, search_conf
     kbs = KnowledgebaseService.get_by_ids(kb_ids)
     embedding_list = list(set([kb.embd_id for kb in kbs]))
 
-    is_knowledge_graph = all([kb.parser_id == ParserType.KG for kb in kbs])
-    retriever = settings.retriever if not is_knowledge_graph else settings.kg_retriever
+    retriever = settings.retriever
     embd_owner_tenant_id = kbs[0].tenant_id
     embd_model_config = get_model_config_by_type_and_name(embd_owner_tenant_id, LLMType.EMBEDDING, embedding_list[0])
     embd_mdl = LLMBundle(embd_owner_tenant_id, embd_model_config)

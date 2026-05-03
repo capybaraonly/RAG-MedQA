@@ -282,7 +282,6 @@ RAG-MedQA/
 │   │   ├── es_conn.py            # Elasticsearch 连接器
 │   │   ├── redis_conn.py         # Redis 连接器（锁 + 会话 + 缓存）
 │   │   └── minio_conn.py         # MinIO 对象存储连接器
-│   ├── graphrag/                 # 知识图谱增强检索（预留接口）
 │   └── res/
 │       ├── synonym.json           # 通用同义词词典（262 KB）
 │       ├── medical_synonym.json  # 医疗同义词词典（112 组）
