@@ -691,7 +691,7 @@ def attach_media_context(chunks, table_context_size=0, image_context_size=0):
 
 
 def append_context2table_image4pdf(sections: list, tabls: list, table_context_size=0, return_context=False):
-    from deepdoc.parser import PdfParser
+    from parser import PdfParser
     if table_context_size <=0:
         return [] if return_context else tabls
 

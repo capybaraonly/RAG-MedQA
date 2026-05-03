@@ -30,7 +30,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        用户界面（React SPA）                  │
-│              登录 / 注册 → 会话管理 → SSE 流式问答            │
+│              登录 / 注册 → 会话管理 → SSE 流式问答              │
 └──────────────────────────┬──────────────────────────────────┘
                            │ HTTP / SSE
                            ▼
@@ -42,13 +42,13 @@
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Quart 异步 Web 服务                        │
-│         路由发现 → JWT 鉴权 → 会话管理 → 对话流程编排          │
+│         路由发现 → JWT 鉴权 → 会话管理 → 对话流程编排             │
 └──────────┬────────────┬────────────┬────────────┬───────────┘
            │            │            │            │
            ▼            ▼            ▼            ▼
 ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
 │    MySQL    │ │Elasticsearch│ │    Redis    │ │    MinIO    │
-│  用户/会话   │ │ 向量+全文索引 │ │ 会话/锁/队列 │ │  文件存储   │
+│  用户/会话   │ │ 向量+全文索引 │ │ 会话/锁/队列  │ │  文件存储    │
 └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ```
 
@@ -233,7 +233,7 @@ DeepSeek（主力）──超时/不可用──→ Qwen（备选）
 - **主力模型**：DeepSeek（`deepseek-chat`），默认承载全部请求
 - **备选模型**：Qwen（`qwen-max`，通义千问），在主力不可用时自动接管
 - **切换逻辑**：`LLMBundle.async_chat_streamly_delta()` 中，主力抛出异常时自动实例化备选 `LLMBundle` 重试
-- **Token 追踪**：每个用户的 token 消耗记录在 `TenantLLM` 表中，支持用量统计
+- **Token 追踪**：每个用户的 token 消耗记录在用户 LLM 配置表中，支持用量统计
 
 ---
 
@@ -288,11 +288,11 @@ RAG-MedQA/
 │       ├── medical_synonym.json  # 医疗同义词词典（约 100 组）
 │       └── ner.json              # 命名实体识别词典
 │
-├── deepdoc/                      # 文档解析库
-│   └── parser/                   # PDF / DOCX / XLSX / PPT / HTML 解析器
-│
-├── parser/                       # 高层解析器
-│   └── mineru_parser.py          # MinerU 临床指南 PDF 解析器
+├── parser/                       # 文档解析器
+│   ├── mineru_parser.py          # MinerU PDF → Markdown 解析（临床指南）
+│   ├── json_parser.py            # JSON / JSONL 医疗对话数据解析（79 万条）
+│   ├── markdown_parser.py        # Markdown 结构化切块（MinerU 输出后处理）
+│   └── utils.py                  # 文本读取、PDF 页数统计
 │
 ├── web/                          # 前端 SPA
 │   ├── src/
@@ -451,7 +451,7 @@ User (用户账户)
   │     └── Conversation (会话)
   │           ├── message (JSON 消息数组)
   │           └── reference (JSON 引用数组，与消息并行)
-  ├── TenantLLM (用户 LLM 配置)
+  ├── LLM 配置表 (用户 LLM 配置)
   ├── Task (文档解析任务)
   └── EvaluationDataset → EvaluationRun → EvaluationResult
 ```
@@ -462,8 +462,8 @@ User (用户账户)
 
 | 层次 | 组件 | 说明 |
 |---|---|---|
-| **文档解析** | MinerU | 临床指南 PDF 结构化提取 |
-| | deepdoc | PDF / DOCX / XLSX / PPT / HTML 多格式 |
+| **文档解析** | MinerU（CLI / API） | 临床指南 PDF → Markdown |
+| | parser（JSON + Markdown） | JSON 对话数据解析 + Markdown 结构化切块 |
 | **Embedding** | BAAI/bge-m3 | 1024 维稠密向量，中英双语 |
 | **Reranker** | BAAI/bge-reranker-v2-m3 | Cross-Encoder 精排 |
 | **向量 + 全文** | Elasticsearch 8.x | 混合索引 + 加权融合检索 |

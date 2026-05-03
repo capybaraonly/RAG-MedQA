@@ -23,6 +23,23 @@ def get_text(fnm: str, binary=None) -> str:
     return txt
 
 
+def total_page_number(fnm, binary=None):
+    """Return total page count of a PDF, or approximate from text line count."""
+    try:
+        if binary is not None:
+            with pdf2_read(BytesIO(binary)) as pdf:
+                return len(pdf.pages)
+        with pdf2_read(fnm) as pdf:
+            return len(pdf.pages)
+    except Exception:
+        # Fallback: count lines in text-accessible content
+        try:
+            txt = get_text(fnm, binary)
+            return max(1, txt.count("\n") // 40)
+        except Exception:
+            return 1
+
+
 def extract_pdf_outlines(source):
     try:
         with pdf2_read(source if isinstance(source, str) else BytesIO(source)) as pdf:

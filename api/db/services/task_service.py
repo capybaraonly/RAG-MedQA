@@ -6,7 +6,7 @@ import xxhash
 from datetime import datetime
 
 from api.db.db_utils import bulk_insert_into_db
-from deepdoc.parser import PdfParser
+from parser import PdfParser, total_page_number
 from peewee import JOIN
 from api.db.db_models import DB, File2Document, File
 from api.db import FileType
@@ -16,7 +16,6 @@ from api.db.services.document_service import DocumentService
 from common.misc_utils import get_uuid
 from common.time_utils import current_timestamp
 from common.constants import StatusEnum, TaskStatus
-from deepdoc.parser.excel_parser import RAG_MedQAExcelParser
 from rag.utils.redis_conn import REDIS_CONN
 from common import settings
 from rag.nlp import search
@@ -374,7 +373,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
     if doc["type"] == FileType.PDF.value:
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
-        pages = PdfParser.total_page_number(doc["name"], file_bin)
+        pages = total_page_number(doc["name"], file_bin)
         if pages is None:
             pages = 0
         page_size = doc["parser_config"].get("task_page_size") or 12
@@ -395,7 +394,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
 
     elif doc["parser_id"] == "table":
         file_bin = settings.STORAGE_IMPL.get(bucket, name)
-        rn = RAG_MedQAExcelParser.row_number(doc["name"], file_bin)
+        rn = max(1, (file_bin or b"").count(b"\n") if file_bin else 1)
         for i in range(0, rn, 3000):
             task = new_task()
             task["from_page"] = i

@@ -47,7 +47,7 @@ from common.constants import SANDBOX_ARTIFACT_BUCKET, VALID_TASK_STATUS, ParserT
 from common.file_utils import get_project_base_directory
 from common.metadata_utils import convert_conditions, meta_filter, turn2jsonschema
 from common.misc_utils import get_uuid, thread_pool_exec
-from deepdoc.parser.html_parser import RAG_MedQAHtmlParser
+RAG_MedQAHtmlParser = None  # deepdoc removed — HTML parser not needed
 from rag.nlp import search
 
 

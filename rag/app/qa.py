@@ -10,17 +10,15 @@ from io import BytesIO
 from timeit import default_timer as timer
 from openpyxl import load_workbook
 
-from deepdoc.parser.utils import get_text
+from parser import get_text
 from rag.nlp import is_english, random_choices, qbullets_category, add_positions, has_qbullet, docx_question_level
 from rag.nlp import rag_tokenizer, tokenize_table, concat_img
-from deepdoc.parser import ExcelParser, DocxParser
-from docx import Document
 from markdown import markdown
 
 from common.float_utils import get_float
 
 
-class Excel(ExcelParser):
+class Excel:
     def __call__(self, fnm, binary=None, callback=None):
         if not binary:
             wb = load_workbook(fnm)
@@ -64,11 +62,12 @@ class Excel(ExcelParser):
 
 
 
-class Docx(DocxParser):
+class Docx:
     def __init__(self):
         pass
 
     def __call__(self, filename, binary=None, from_page=0, to_page=100000, callback=None):
+        from docx import Document
         self.doc = Document(
             filename) if not binary else Document(BytesIO(binary))
         pn = 0

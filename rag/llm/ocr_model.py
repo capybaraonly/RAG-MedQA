@@ -57,7 +57,7 @@ class MinerU(Base):
 
     def parse_pdf(self, filepath=None, binary=None, callback=None,
                   parse_method="auto", lang=None, **kwargs):
-        from deepdoc.parser.mineru_parser import MinerUPdfParser
+        from parser.mineru_parser import MinerUPdfParser
 
         parser = MinerUPdfParser(
             api_url=self.api_url,
