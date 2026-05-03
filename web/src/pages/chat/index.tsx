@@ -60,7 +60,7 @@ function MessageBubble({
     >
       {isUser ? <UserAvatar nickname={nickname} /> : <BotAvatar />}
       <div
-        className={`max-w-[72%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+        className={`max-w-[72%] px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
           isUser
             ? 'bg-brand-blue text-white rounded-tr-sm'
             : 'bg-white text-brand-ink border border-brand-border rounded-tl-sm shadow-sm'
@@ -237,7 +237,7 @@ function SessionView({
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
           <img
             src="/logo.svg"
-            className="w-16 h-16 drop-shadow-md"
+            className="w-20 h-20 drop-shadow-md mb-4"
             alt="logo"
           />
           <h2 className="text-2xl font-bold text-brand-ink mb-2">岐黄问诊</h2>
@@ -274,7 +274,7 @@ function SessionView({
 
       <div className="px-4 pb-4 pt-2">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-end gap-2 bg-white border border-brand-border rounded-2xl px-4 py-3 shadow-sm focus-within:border-brand-blue/50 focus-within:ring-2 focus-within:ring-brand-blue/10 transition">
+          <div className="flex items-center gap-2 bg-white border border-brand-border rounded-2xl px-4 py-3 shadow-sm focus-within:border-brand-blue/50 focus-within:ring-2 focus-within:ring-brand-blue/10 transition">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -283,7 +283,7 @@ function SessionView({
               onKeyDown={handleKeyDown}
               placeholder="输入问题，Enter 发送，Shift+Enter 换行"
               disabled={streaming}
-              className="flex-1 resize-none bg-transparent text-sm text-brand-ink placeholder-brand-muted/50 outline-none min-h-[24px] max-h-[160px] leading-6"
+              className="flex-1 resize-none bg-transparent text-sm text-brand-ink placeholder-brand-muted/50 outline-none min-h-[24px] max-h-[160px] leading-6 self-center"
             />
             <button
               onClick={handleSend}
@@ -327,7 +327,7 @@ function SessionView({
               )}
             </button>
           </div>
-          <p className="text-center text-[11px] text-brand-muted/50 mt-2">
+          <p className="text-center text-xs text-brand-muted/50 mt-2">
             本平台仅供健康参考，不构成医疗建议，请咨询专业医生
           </p>
         </div>
@@ -400,7 +400,7 @@ export default function ChatPage() {
           <div className="px-4 pt-5 pb-4 border-b border-brand-border">
             <div className="flex items-center gap-2.5">
               <img src="/logo.svg" className="w-8 h-8" alt="logo" />
-              <span className="font-bold text-brand-ink text-base">
+              <span className="font-bold text-brand-ink text-[20px]">
                 岐黄问诊
               </span>
             </div>
@@ -465,10 +465,10 @@ export default function ChatPage() {
                   ) : (
                     <>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-brand-ink truncate">
+                        <div className="text-sm text-brand-ink truncate">
                           {s.name}
                         </div>
-                        <div className="text-[10px] text-brand-muted/60 mt-0.5">
+                        <div className="text-xs text-brand-muted/60 mt-0.5">
                           {formatTime(s.update_time)}
                         </div>
                       </div>
@@ -507,10 +507,10 @@ export default function ChatPage() {
             >
               <UserAvatar nickname={nickname} />
               <div className="flex-1 text-left min-w-0">
-                <div className="text-xs font-medium text-brand-ink truncate">
+                <div className="text-sm font-medium text-brand-ink truncate">
                   {nickname}
                 </div>
-                <div className="text-[10px] text-brand-muted/60 truncate">
+                <div className="text-xs text-brand-muted/60 truncate">
                   {user?.email}
                 </div>
               </div>

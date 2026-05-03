@@ -73,9 +73,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-gray">
+    <div className="h-screen overflow-y-auto bg-brand-gray">
       {/* Header */}
-      <header className="bg-white border-b border-brand-border px-6 py-4 flex items-center gap-4">
+      <header className="sticky top-0 z-10 bg-white border-b border-brand-border px-6 py-4 flex items-center gap-4">
         <button
           onClick={() => navigate('/chat')}
           className="flex items-center gap-1.5 text-sm text-brand-muted hover:text-brand-ink transition"
@@ -95,7 +95,7 @@ export default function ProfilePage() {
           </svg>
           返回
         </button>
-        <h1 className="text-base font-semibold text-brand-ink">个人信息</h1>
+        <h1 className="text-lg font-semibold text-brand-ink">个人信息</h1>
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
@@ -105,7 +105,7 @@ export default function ProfilePage() {
             {initial}
           </div>
           <div>
-            <div className="font-semibold text-brand-ink text-base">
+            <div className="font-semibold text-brand-ink text-lg">
               {user?.nickname || '—'}
             </div>
             <div className="text-sm text-brand-muted mt-0.5">{user?.email}</div>
@@ -124,11 +124,11 @@ export default function ProfilePage() {
             onChange={(e) => setNickname(e.target.value)}
             placeholder="请输入昵称"
             maxLength={30}
-            className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition"
+            className="w-full px-4 py-3 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition"
           />
           {nicknameMsg && (
             <p
-              className={`text-xs ${nicknameMsg.includes('成功') ? 'text-brand-blue' : 'text-red-500'}`}
+              className={`text-sm ${nicknameMsg.includes('成功') ? 'text-brand-blue' : 'text-red-500'}`}
             >
               {nicknameMsg}
             </p>
@@ -136,7 +136,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingNickname || !nickname.trim()}
-            className="px-5 py-2 rounded-xl bg-brand-blue text-white text-sm font-medium hover:bg-brand-blue-dark disabled:opacity-50 transition"
+            className="px-6 py-2.5 rounded-xl bg-brand-blue text-white text-sm font-medium hover:bg-brand-blue-dark disabled:opacity-50 transition"
           >
             {savingNickname ? '保存中…' : '保存'}
           </button>
@@ -169,7 +169,7 @@ export default function ProfilePage() {
             },
           ].map(({ label, value, set, placeholder }) => (
             <div key={label}>
-              <label className="block text-xs text-brand-muted mb-1">
+              <label className="block text-sm text-brand-muted mb-1.5">
                 {label}
               </label>
               <input
@@ -177,13 +177,13 @@ export default function ProfilePage() {
                 value={value}
                 onChange={(e) => set(e.target.value)}
                 placeholder={placeholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition"
+                className="w-full px-4 py-3 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink text-sm placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition"
               />
             </div>
           ))}
           {pwdMsg && (
             <p
-              className={`text-xs ${pwdMsg.includes('成功') ? 'text-brand-blue' : 'text-red-500'}`}
+              className={`text-sm ${pwdMsg.includes('成功') ? 'text-brand-blue' : 'text-red-500'}`}
             >
               {pwdMsg}
             </p>
@@ -191,7 +191,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={savingPwd || !oldPwd || !newPwd || !confirmPwd}
-            className="px-5 py-2 rounded-xl bg-brand-blue text-white text-sm font-medium hover:bg-brand-blue-dark disabled:opacity-50 transition"
+            className="px-6 py-2.5 rounded-xl bg-brand-blue text-white text-sm font-medium hover:bg-brand-blue-dark disabled:opacity-50 transition"
           >
             {savingPwd ? '修改中…' : '修改密码'}
           </button>
@@ -201,7 +201,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl border border-brand-border p-6">
           <button
             onClick={handleLogout}
-            className="px-5 py-2 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition"
+            className="px-6 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition"
           >
             退出登录
           </button>

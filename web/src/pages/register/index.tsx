@@ -37,7 +37,6 @@ export default function RegisterPage() {
             avatar: res.data.avatar ?? '',
           }),
         );
-        // Clear guest session
         localStorage.removeItem('qh_guest_count');
         localStorage.removeItem('qh_guest_session');
         navigate('/chat');
@@ -58,13 +57,13 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <img
             src="/logo.svg"
-            className="w-16 h-16 drop-shadow-md mx-auto mb-4"
+            className="w-20 h-20 drop-shadow-md mx-auto mb-4"
             alt="logo"
           />
           <h1 className="text-2xl font-bold text-brand-ink tracking-wide">
             注册账号
           </h1>
-          <p className="text-brand-muted text-sm mt-1">
+          <p className="text-brand-muted text-sm mt-2">
             注册后无限使用，保存历史对话
           </p>
         </div>
@@ -73,58 +72,58 @@ export default function RegisterPage() {
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl shadow-sm border border-brand-border p-8 space-y-4"
         >
-          <div>
-            <label className="block text-sm font-medium text-brand-ink mb-1.5">
-              昵称
-            </label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="请输入昵称"
-              maxLength={30}
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brand-ink mb-1.5">
-              邮箱
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="请输入邮箱"
-              autoComplete="email"
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brand-ink mb-1.5">
-              密码
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="至少 8 位"
-              autoComplete="new-password"
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brand-ink mb-1.5">
-              确认密码
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="再次输入密码"
-              autoComplete="new-password"
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
-            />
-          </div>
+          {[
+            {
+              label: '昵称',
+              type: 'text',
+              value: nickname,
+              set: setNickname,
+              placeholder: '请输入昵称',
+              autocomplete: 'nickname',
+              extra: { maxLength: 30 },
+            },
+            {
+              label: '邮箱',
+              type: 'email',
+              value: email,
+              set: setEmail,
+              placeholder: '请输入邮箱',
+              autocomplete: 'email',
+            },
+            {
+              label: '密码',
+              type: 'password',
+              value: password,
+              set: setPassword,
+              placeholder: '至少 8 位',
+              autocomplete: 'new-password',
+            },
+            {
+              label: '确认密码',
+              type: 'password',
+              value: confirmPassword,
+              set: setConfirmPassword,
+              placeholder: '再次输入密码',
+              autocomplete: 'new-password',
+            },
+          ].map(
+            ({ label, type, value, set, placeholder, autocomplete, extra }) => (
+              <div key={label}>
+                <label className="block text-sm font-medium text-brand-ink mb-1.5">
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  value={value}
+                  onChange={(e) => set(e.target.value)}
+                  placeholder={placeholder}
+                  autoComplete={autocomplete}
+                  {...extra}
+                  className="w-full px-4 py-3 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
+                />
+              </div>
+            ),
+          )}
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
@@ -133,7 +132,7 @@ export default function RegisterPage() {
             disabled={
               loading || !nickname || !email || !password || !confirmPassword
             }
-            className="w-full py-2.5 rounded-xl bg-brand-blue text-white font-medium text-sm hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full py-3 rounded-xl bg-brand-blue text-white font-medium text-sm hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? '注册中…' : '注册'}
           </button>

@@ -44,7 +44,7 @@ export default function LoginPage() {
         <div className="text-center mb-10">
           <img
             src="/logo.svg"
-            className="w-16 h-16 drop-shadow-md mx-auto mb-4"
+            className="w-20 h-20 drop-shadow-md mx-auto mb-4"
             alt="logo"
           />
           <h1 className="text-2xl font-bold text-brand-ink tracking-wide">
@@ -68,7 +68,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="请输入邮箱"
               autoComplete="email"
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
             />
           </div>
           <div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="请输入密码"
               autoComplete="current-password"
-              className="w-full px-4 py-2.5 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-brand-border bg-brand-gray/50 text-brand-ink placeholder-brand-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition text-sm"
             />
           </div>
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full py-2.5 rounded-xl bg-brand-blue text-white font-medium text-sm hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full py-3 rounded-xl bg-brand-blue text-white font-medium text-sm hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? '登录中…' : '登录'}
           </button>

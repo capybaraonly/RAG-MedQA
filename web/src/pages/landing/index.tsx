@@ -242,7 +242,7 @@ export default function LandingPage() {
       <header className="bg-white border-b border-brand-border px-5 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <img src="/logo.svg" className="w-7 h-7" alt="logo" />
-          <span className="font-bold text-brand-ink text-sm">岐黄问诊</span>
+          <span className="font-bold text-brand-ink text-[20px]">岐黄问诊</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -267,14 +267,14 @@ export default function LandingPage() {
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
             <img
               src="/logo.svg"
-              className="w-16 h-16 drop-shadow-md"
+              className="w-20 h-20 drop-shadow-md mb-4"
               alt="logo"
             />
-            <h2 className="text-2xl font-bold text-brand-ink mb-1">岐黄问诊</h2>
+            <h2 className="text-2xl font-bold text-brand-ink mb-2">岐黄问诊</h2>
             <p className="text-brand-muted text-sm mb-2">
               AI 辅助医疗问答 · 有问必答
             </p>
-            <p className="text-brand-muted/60 text-xs mb-8">
+            <p className="text-brand-muted/60 text-sm mb-10">
               免费体验 {GUEST_LIMIT} 次问答，
               <button
                 onClick={() => navigate('/register')}
@@ -308,7 +308,7 @@ export default function LandingPage() {
                 >
                   {isUser ? <UserAvatar /> : <BotAvatar />}
                   <div
-                    className={`max-w-[72%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    className={`max-w-[72%] px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                       isUser
                         ? 'bg-brand-blue text-white rounded-tr-sm'
                         : 'bg-white text-brand-ink border border-brand-border rounded-tl-sm shadow-sm'
@@ -345,7 +345,7 @@ export default function LandingPage() {
                 </button>
               </p>
             )}
-            <div className="flex items-end gap-2 bg-white border border-brand-border rounded-2xl px-4 py-3 shadow-sm focus-within:border-brand-blue/50 focus-within:ring-2 focus-within:ring-brand-blue/10 transition">
+            <div className="flex items-center gap-2 bg-white border border-brand-border rounded-2xl px-4 py-3 shadow-sm focus-within:border-brand-blue/50 focus-within:ring-2 focus-within:ring-brand-blue/10 transition">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -354,7 +354,7 @@ export default function LandingPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="输入问题，Enter 发送，Shift+Enter 换行"
                 disabled={streaming}
-                className="flex-1 resize-none bg-transparent text-sm text-brand-ink placeholder-brand-muted/50 outline-none min-h-[24px] max-h-[160px] leading-6"
+                className="flex-1 resize-none bg-transparent text-sm text-brand-ink placeholder-brand-muted/50 outline-none min-h-[24px] max-h-[160px] leading-6 self-center"
               />
               <button
                 onClick={() => sendMessage(input)}
