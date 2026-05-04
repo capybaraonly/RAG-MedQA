@@ -19,7 +19,7 @@ import json
 import logging
 from uuid import uuid4
 
-from quart import request
+from quart import request, Response
 
 from api.apps import current_user, login_required
 from api.db.db_models import Dialog, Conversation
@@ -274,6 +274,7 @@ async def chats_ask():
             ):
                 yield ans
 
-        return generate()
+        return Response(generate(), content_type="text/event-stream",
+                        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
     except Exception as e:
         return server_error_response(e)
