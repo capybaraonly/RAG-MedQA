@@ -108,43 +108,19 @@ def _load_user():
             return user[0]
     except Exception as e_auth:
         logging.warning(f"load_user from jwt got exception {e_auth}")
+        # JWT decode failed — extract raw token (handles "Bearer <token>" and bare "<token>")
         try:
-            authorization = request.headers.get("Authorization")
-            if len(authorization.split()) == 2:
-                token = authorization.split()[1]
-                objs = APIToken.query(token=token)
-                if objs:
-                    user = UserService.query(id=objs[0].user_id, status=StatusEnum.VALID.value)
-                    if user:
-                        if not user[0].access_token or not user[0].access_token.strip():
-                            logging.warning(f"User {user[0].email} has empty access_token in database")
-                            return None
+            authorization = request.headers.get("Authorization") or ""
+            parts = authorization.split()
+            token = parts[1] if len(parts) == 2 else (parts[0] if len(parts) == 1 else "")
+            if token and len(token) >= 32:
+                user = UserService.query(access_token=token, status=StatusEnum.VALID.value)
+                if user:
+                    if user[0].access_token and user[0].access_token.strip():
                         g.user = user[0]
                         return user[0]
-                    else:
-                        logging.warning(f"load_user: No user found for user_id={objs[0].user_id} from APIToken")
-                else:
-                    logging.warning(f"load_user: No APIToken found for token={token[:10]}...")
-        except Exception as e_api_token:
-            logging.warning(f"load_user from api token got exception {e_api_token}")
-        # Fallback: try raw authorization value as access_token (for login tokens sent without JWT)
-        try:
-            authorization = request.headers.get("Authorization")
-            if authorization and len(authorization.split()) == 1:
-                # Single value without "Bearer " prefix - try as raw access_token
-                access_token = authorization.strip()
-                if access_token and len(access_token) >= 32:
-                    user = UserService.query(
-                        access_token=access_token, status=StatusEnum.VALID.value
-                    )
-                    if user:
-                        if not user[0].access_token or not user[0].access_token.strip():
-                            logging.warning(f"User {user[0].email} has empty access_token in database")
-                            return None
-                        g.user = user[0]
-                        return user[0]
-        except Exception as e_raw_token:
-            logging.warning(f"load_user raw token fallback got exception {e_raw_token}")
+        except Exception as e_fallback:
+            logging.warning(f"load_user token fallback got exception {e_fallback}")
 
 
 current_user = LocalProxy(_load_user)
