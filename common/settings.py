@@ -106,22 +106,22 @@ def get_svr_queue_names():
     return [get_svr_queue_name(priority) for priority in [1, 0]]
 
 def _get_or_create_secret_key():
-    # secret_key = os.environ.get("RAG-MedQA_SECRET_KEY")
-    # if secret_key and len(secret_key) >= 32:
-    #     return secret_key
-    #
-    # # Check if there's a configured secret key
-    # configured_key = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("secret_key")
-    # if configured_key and configured_key != str(date.today()) and len(configured_key) >= 32:
-    #     return configured_key
-
-    # Generate a new secure key and warn about it
     import logging
 
+    # Check if there's a configured secret key in service_conf.yaml
+    configured_key = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("secret_key")
+    if configured_key and len(configured_key) >= 32:
+        return configured_key
+
+    # Fall back to Redis-persisted key (or generate one)
     generated_key = secrets.token_hex(32)
-    secret_key = REDIS_CONN.get_or_create_secret_key("RAG-MedQA:system:secret_key", generated_key)
-    logging.warning("SECURITY WARNING: Using auto-generated SECRET_KEY.")
-    return secret_key
+    try:
+        secret_key = REDIS_CONN.get_or_create_secret_key("RAG-MedQA:system:secret_key", generated_key)
+        logging.warning("SECURITY WARNING: Using auto-generated SECRET_KEY.")
+        return secret_key
+    except Exception:
+        logging.warning("SECURITY WARNING: Redis unavailable, using ephemeral SECRET_KEY.")
+        return generated_key
 
 
 
