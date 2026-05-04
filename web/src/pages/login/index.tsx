@@ -17,7 +17,7 @@ export default function LoginPage() {
     try {
       const res = await login(email, password);
       if (res.code === 0 && res.data) {
-        localStorage.setItem('qh_token', res.data.access_token);
+        localStorage.setItem('qh_token', res._jwt ?? res.data.access_token);
         localStorage.setItem(
           'qh_user',
           JSON.stringify({

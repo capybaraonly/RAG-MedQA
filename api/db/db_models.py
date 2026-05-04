@@ -713,7 +713,7 @@ class User(DataBaseModel, AuthUser):
 
     def get_id(self):
         jwt = Serializer(secret_key=settings.SECRET_KEY)
-        return jwt.dumps(str(self.access_token))
+        return jwt.dumps(str(self.id))
 
     class Meta:
         db_table = "user"

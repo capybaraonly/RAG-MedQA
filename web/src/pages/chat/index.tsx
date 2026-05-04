@@ -229,7 +229,7 @@ function SessionView({
     }
   }
 
-  const showWelcome = !session || messages.length === 0;
+  const showWelcome = messages.length === 0;
 
   return (
     <main className="flex-1 flex flex-col min-w-0">

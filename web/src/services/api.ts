@@ -58,11 +58,15 @@ export interface LoginResult {
 export async function login(
   email: string,
   password: string,
-): Promise<LoginResult> {
-  return post<LoginResult>('/v1/user/login', {
-    email,
-    password: rsaEncrypt(password),
+): Promise<LoginResult & { _jwt?: string }> {
+  const res = await fetch('/v1/user/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: rsaEncrypt(password) }),
   });
+  const data = (await res.json()) as LoginResult;
+  const jwt = res.headers.get('Authorization');
+  return { ...data, _jwt: jwt ?? undefined };
 }
 
 export async function logout(): Promise<void> {
@@ -277,12 +281,15 @@ export async function register(
   email: string,
   nickname: string,
   password: string,
-): Promise<LoginResult> {
-  return post<LoginResult>('/v1/user/register', {
-    email,
-    nickname,
-    password: rsaEncrypt(password),
+): Promise<LoginResult & { _jwt?: string }> {
+  const res = await fetch('/v1/user/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, nickname, password: rsaEncrypt(password) }),
   });
+  const data = (await res.json()) as LoginResult;
+  const jwt = res.headers.get('Authorization');
+  return { ...data, _jwt: jwt ?? undefined };
 }
 
 export async function changePassword(

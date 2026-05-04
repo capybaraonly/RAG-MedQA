@@ -28,7 +28,7 @@ export default function RegisterPage() {
     try {
       const res = await register(email, nickname, password);
       if (res.code === 0 && res.data) {
-        localStorage.setItem('qh_token', res.data.access_token);
+        localStorage.setItem('qh_token', res._jwt ?? res.data.access_token);
         localStorage.setItem(
           'qh_user',
           JSON.stringify({

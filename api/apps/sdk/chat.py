@@ -272,7 +272,10 @@ async def chats_ask():
                 stream=stream,
                 kb_ids=kb_ids,
             ):
-                yield ans
+                if isinstance(ans, str):
+                    yield ans.encode("utf-8")
+                else:
+                    yield ans
 
         return Response(generate(), content_type="text/event-stream",
                         headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
