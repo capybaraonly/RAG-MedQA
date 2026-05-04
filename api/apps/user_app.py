@@ -108,12 +108,12 @@ async def login():
             message="This account has been disabled, please contact the administrator!",
         )
     elif user:
-        response_data = user.to_json()
         user.access_token = get_uuid()
         login_user(user)
         user.update_time = current_timestamp()
         user.update_date = datetime_format(datetime.now())
         user.save()
+        response_data = user.to_json()
         msg = "Welcome back!"
 
         return await construct_response(data=response_data, auth=user.get_id(), message=msg)
