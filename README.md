@@ -6,12 +6,6 @@
 
 - [系统架构](#系统架构)
 - [核心流程原理](#核心流程原理)
-  - [1. 文档解析与知识入库](#1-文档解析与知识入库)
-  - [2. 查询预处理](#2-查询预处理)
-  - [3. 混合检索](#3-混合检索)
-  - [4. 精排序](#4-精排序)
-  - [5. 生成与溯源](#5-生成与溯源)
-  - [6. 多模型路由与容错](#6-多模型路由与容错)
 - [项目结构](#项目结构)
 - [前端架构](#前端架构)
 - [后端架构](#后端架构)
@@ -20,7 +14,7 @@
 - [配置说明](#配置说明)
 - [开发指南](#开发指南)
 - [API 接口](#api-接口)
-- [评估体系](#评估体系)
+- [离线评估](#离线评估)
 - [免责声明](#免责声明)
 
 ---
@@ -48,9 +42,11 @@
            ▼            ▼            ▼            ▼
 ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
 │    MySQL    │ │Elasticsearch│ │    Redis    │ │    MinIO    │
-│  用户&会话   │ │ 向量+全文索引 │  │ 会话/锁/队列 │ │  文件存储     │
+│  用户&会话   │ │ 向量+全文索引 │  │  锁/队列    │ │  文件存储     │
 └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ```
+
+> **单租户架构**：系统以单一固定租户（`SYSTEM_TENANT_ID`）运行，无多租户隔离层。所有知识库、对话、用户均在同一命名空间下共享资源。
 
 **请求链路**（一次问答的完整路径）：
 
@@ -70,7 +66,7 @@
 上下文装配 ─── Top-K 知识块 + 引用提示注入 system prompt
     │
     ▼
-LLM 生成 ─── DeepSeek 主力 / Qwen 降级备选，SSE 流式输出
+LLM 生成 ─── 主力模型 / 可配置备选模型，SSE 流式输出
     │
     ▼
 引用插入 ─── 答案文本中插入 [ID:N] 标记，附带来源文档信息
@@ -93,7 +89,7 @@ LLM 生成 ─── DeepSeek 主力 / Qwen 降级备选，SSE 流式输出
 H1 心血管疾病诊疗指南
   H2 高血压
     H3 药物治疗
-      → chunk: "H1 心血管疾病诊疗指南 > H2 高血压 > H3 药物治疗\n钙通道阻滞剂（CCB）是..." 
+      → chunk: "H1 心血管疾病诊疗指南 > H2 高血压 > H3 药物治疗\n钙通道阻滞剂（CCB）是..."
 ```
 
 层级路径作为 chunk 元数据保留，检索时可依据标题层级提升相关性权重。
@@ -129,7 +125,7 @@ H1 心血管疾病诊疗指南
 **第二级 — 医疗同义词扩展**（`rag/nlp/synonym.py`）
 
 加载双词典：
-- `synonym.json`（通用中文同义词，262 KB）
+- `synonym.json`（通用中文同义词）
 - `medical_synonym.json`（医疗专用，112 组疾病术语映射）
 
 ```
@@ -169,7 +165,7 @@ H1 心血管疾病诊疗指南
 |---|---|---|
 | BM25 全文检索 | Elasticsearch `match` + 字段加权 | 精确匹配医学术语、药名、数字范围 |
 | 向量检索 | BGE-m3 embedding + `knn` query | 语义近似匹配，覆盖同义不同表述 |
-| 加权融合 | Elasticsearch `FusionExpr(weighted_sum)` | 综合两种检索的优势 |
+| 加权融合 | Elasticsearch 加权求和 | 综合两种检索的优势 |
 
 **降级策略**：若加权融合无结果，降为纯全文检索（`similarity_threshold=0.17`，`minimum_should_match=0.1`），保证至少召回部分相关文档。
 
@@ -226,14 +222,9 @@ LLM 以 SSE（Server-Sent Events）流式输出，每个事件携带增量 token
 
 系统实现了 **主备模型自动切换**（`api/db/services/llm_service.py`）：
 
-```
-DeepSeek（主力）──超时/不可用──→ Qwen（备选）
-```
-
-- **主力模型**：DeepSeek（`deepseek-chat`），默认承载全部请求
-- **备选模型**：Qwen（`qwen-max`，通义千问），在主力不可用时自动接管
-- **切换逻辑**：`LLMBundle.async_chat_streamly_delta()` 中，主力抛出异常时自动实例化备选 `LLMBundle` 重试
-- **Token 追踪**：每个用户的 token 消耗记录在用户 LLM 配置表中，支持用量统计
+- **主力模型**：由 `conf/service_conf.yaml` 中 `user_default_llm` 配置决定（默认 DeepSeek）
+- **备选模型**：通过环境变量 `FALLBACK_LLM_FACTORY` / `FALLBACK_LLM_NAME` 指定，主力不可用时自动接管
+- **切换逻辑**：`LLMBundle.async_chat()` 捕获主力异常后，实例化备选 `LLMBundle` 重试
 
 ---
 
@@ -244,19 +235,18 @@ RAG-MedQA/
 ├── api/                          # 后端服务
 │   ├── apps/                     # Quart 应用 + API 路由模块
 │   │   ├── __init__.py           # 应用工厂：Quart 实例化、JWT 鉴权、蓝图自动发现、SPA 静态托管
-│   │   ├── sdk/chat.py           # 对话 / 会话 / 问答 接口
-│   │   ├── kb_app.py             # 知识库 CRUD
-│   │   ├── user_app.py           # 用户注册 / 登录 / 设置
-│   │   ├── llm_app.py            # LLM 模型配置
-│   │   └── evaluation_app.py     # RAG 评估 API 路由
+│   │   ├── sdk/chat.py           # 对话 / 会话 / 问答 接口（/api/v1/chats/...）
+│   │   ├── kb_app.py             # 知识库管理（/v1/kb/...）
+│   │   ├── llm_app.py            # LLM 模型配置（/v1/llm/...）
+│   │   ├── user_app.py           # 用户注册 / 登录 / 设置（/v1/user/...）
+│   │   └── system_app.py         # 系统状态与配置（/v1/system/...）
 │   ├── db/
-│   │   ├── db_models.py          # Peewee ORM 模型定义（20+ 表）
+│   │   ├── db_models.py          # Peewee ORM 模型定义
 │   │   ├── services/             # 业务逻辑层
 │   │   │   ├── dialog_service.py     # 对话核心：检索 + 生成编排
 │   │   │   ├── conversation_service.py # 会话 CRUD + SSE 流构造
 │   │   │   ├── document_service.py    # 文档解析进度管理
-│   │   │   ├── llm_service.py         # LLM 调用 + 主备路由
-│   │   │   └── evaluation_service.py  # RAG 评估管道
+│   │   │   └── llm_service.py         # LLM 调用 + 主备路由
 │   │   └── runtime_config.py     # 运行时配置
 │   └── ragflow_server.py         # 服务入口
 │
@@ -270,20 +260,16 @@ RAG-MedQA/
 │   ├── llm/
 │   │   ├── chat_model.py         # 聊天模型抽象层（多供应商后端）
 │   │   ├── embedding_model.py    # Embedding 模型抽象层
-│   │   ├── rerank_model.py       # Reranker 模型抽象层
-│   │   └── tts_model.py          # TTS 语音合成
+│   │   └── rerank_model.py       # Reranker 模型抽象层
 │   ├── prompts/
 │   │   ├── generator.py          # Prompt 模板：知识格式化 + 引用指令
-│   │   └── citation_prompt.md    # 引用格式提示模板
+│   │   └── citation_prompt.md    # 引用格式提示模板（及其他 prompt 模板）
 │   ├── app/
 │   │   ├── qa.py                 # Q&A 对话分块器
+│   │   ├── naive.py              # 通用文本分块器
 │   │   └── tag.py                # 问题标签/分诊分类
-│   ├── utils/
-│   │   ├── es_conn.py            # Elasticsearch 连接器
-│   │   ├── redis_conn.py         # Redis 连接器（锁 + 会话 + 缓存）
-│   │   └── minio_conn.py         # MinIO 对象存储连接器
 │   └── res/
-│       ├── synonym.json           # 通用同义词词典（262 KB）
+│       ├── synonym.json           # 通用同义词词典
 │       ├── medical_synonym.json  # 医疗同义词词典（112 组）
 │       └── ner.json              # 命名实体识别词典
 │
@@ -293,11 +279,18 @@ RAG-MedQA/
 │   ├── markdown_parser.py        # Markdown 结构化切块（MinerU 输出后处理）
 │   └── utils.py                  # 文本读取、PDF 页数统计
 │
+├── evaluation/                   # 离线检索评估工具（独立脚本，不依赖后端服务）
+│   ├── run_eval.py               # 评估入口：读取数据集 → 直连 ES 检索 → 输出指标
+│   ├── build_dataset.py          # 构建评估数据集
+│   ├── config.py                 # 评估配置（ES 连接、数据集路径、指标阈值）
+│   ├── dataset/                  # 评估数据集（JSONL 格式）
+│   └── results/                  # 评估结果输出目录
+│
 ├── web/                          # 前端 SPA
 │   ├── src/
 │   │   ├── pages/
 │   │   │   ├── chat/index.tsx        # 聊天主界面（Sidebar + keyed SessionView）
-│   │   │   ├── landing/index.tsx     # 落地页（游客免费体验）
+│   │   │   ├── landing/index.tsx     # 落地页（游客免费体验，最多 3 次）
 │   │   │   ├── login/index.tsx       # 登录页
 │   │   │   ├── register/index.tsx    # 注册页
 │   │   │   └── profile/index.tsx     # 个人信息 / 修改密码
@@ -311,22 +304,22 @@ RAG-MedQA/
 ├── common/                       # 共享模块
 │   ├── settings.py               # 全局配置初始化
 │   ├── config_utils.py           # YAML 配置读取 + 解密
-│   ├── constants.py              # 常量定义
+│   ├── constants.py              # 常量定义（含 SYSTEM_TENANT_ID）
 │   └── file_utils.py             # 文件路径工具
 │
 ├── conf/
-│   ├── service_conf.yaml         # 主配置文件（数据库、ES、模型）
+│   ├── service_conf.yaml         # 主配置文件（数据库、ES、模型、SECRET_KEY）
 │   ├── llm_factories.json        # LLM 供应商注册表
-│   └── *.json                    # ES / Infinity mapping 模板
+│   └── *.json                    # ES mapping 模板
 │
 ├── docker/
 │   ├── docker-compose.yml        # 生产环境（6 服务：MySQL + Redis + ES + MinIO + Backend + Nginx）
 │   ├── docker-compose-base.yml   # 开发环境（仅基础设施，后端本地启动）
+│   ├── nginx.conf                # Nginx 反向代理配置
 │   └── .env                      # 环境变量模板
 │
 ├── Dockerfile                    # 多阶段构建（前端 npm build + 后端 Python）
 ├── pyproject.toml                # Python 项目配置
-├── .env.example                  # 环境变量参考
 └── README.md
 ```
 
@@ -337,15 +330,17 @@ RAG-MedQA/
 ### 组件层级
 
 ```
-App (TooltipProvider)
+App
 └── RouterProvider
-    └── ChatPage
-        ├── Sidebar（会话列表、新建按钮、用户信息）
+    ├── LandingPage          # 未登录：游客体验（最多 3 次问答），超限显示注册引导
+    ├── LoginPage / RegisterPage
+    └── ChatPage             # 已登录
+        ├── Sidebar（会话列表、新建按钮、重命名、用户信息）
         └── SessionView key={activeId}  ← 会话切换时 React 完全重新挂载
-            ├── Welcome 区（Logo + 示例问题）
-            ├── MessageBubble[]（消息列表）
+            ├── Welcome 区（Logo + 4 个示例问题）
+            ├── MessageBubble[]（消息列表，含 SSE 流式光标）
             │   └── renderWithCitations()（[ID:N] → 可点击角标）
-            └── InputBar（输入框 + 发送按钮）
+            └── InputBar（多行输入框 + 发送按钮，Enter 发送 / Shift+Enter 换行）
 ```
 
 ### 会话隔离机制
@@ -354,9 +349,9 @@ App (TooltipProvider)
 
 1. `activeId` 变更 → `key` 变更
 2. React **彻底卸载**旧 `SessionView` 实例——丢弃其全部 state、ref、pending setState、in-flight fetch
-3. React **全新挂载**新 `SessionView` 实例——`useState` 初始值从 session prop 读取
+3. React **全新挂载**新 `SessionView` 实例——`useState` 初始值从 session prop 读取历史消息
 
-这从根本上杜绝了跨会话的状态泄露，无需打补丁式的 version guard。
+这从根本上杜绝了跨会话的状态泄露。
 
 ### SSE 流式问答
 
@@ -376,7 +371,9 @@ export async function* askStream(question, sessionId, ...) {
 for await (const chunk of askStream(...)) {
   if (chunk.done) break;
   fullAnswer += chunk.answer;
-  setMessages(prev => prev.map(m => m.id === streamId ? {...m, content: fullAnswer} : m));
+  setMessages(prev => prev.map(m =>
+    m.id === streamId ? { ...m, content: fullAnswer } : m
+  ));
 }
 ```
 
@@ -385,7 +382,7 @@ for await (const chunk of askStream(...)) {
 ```typescript
 // utils/citations.tsx
 export function renderWithCitations(content: string, refs?: Reference) {
-  // 正则拆分 "[ID:0]"、"[ID:1]" 
+  // 正则拆分 "[ID:0]"、"[ID:1]"
   // → 替换为 Radix Tooltip 包裹的蓝色角标
   // → 悬停显示：文档名 + 原文片段
 }
@@ -400,59 +397,51 @@ export function renderWithCitations(content: string, refs?: Reference) {
 ```
 ragflow_server.py
   → init_root_logger()                # 日志初始化
-  → init_web_db()                     # Peewee 建表
+  → settings.init_settings()          # 全局配置加载（DB、ES、LLM、SECRET_KEY）
+  → init_web_db()                     # Peewee 建表 / 迁移
   → init_web_data()                   # 初始数据填充
   → RuntimeConfig.init_env()          # 运行时配置
-  → 启动 update_progress 后台线程      # 文档解析进度轮询
-  → app.run(host, port)               # Quart 服务启动
+  → 启动 update_progress 后台线程      # 文档解析进度轮询（Redis 分布式锁保护）
+  → app.run(host, port)               # Quart/Hypercorn 服务启动
 ```
 
 ### 路由自动发现
 
-`api/apps/__init__.py` 扫描 `api/apps/`、`api/apps/restful_apis/`、`api/apps/sdk/` 目录下的 `*_app.py` 文件，自动注册为 Quart Blueprint：
+`api/apps/__init__.py` 扫描 `api/apps/` 和 `api/apps/sdk/` 目录下的 `*_app.py` / `*.py` 文件，自动注册为 Quart Blueprint：
 
-```python
-pages_dir = [
-    Path(__file__).parent,
-    Path(__file__).parent / "api" / "apps",
-    Path(__file__).parent / "api" / "apps" / "sdk",
-]
-
-for directory in pages_dir:
-    for path in search_pages_path(directory):
-        url_prefix = register_page(path)  # 自动注册路由前缀
-```
+- `api/apps/*_app.py` → 前缀 `/{version}/{page_name}`（如 `/v1/kb`、`/v1/user`）
+- `api/apps/sdk/*.py` → 前缀 `/api/{version}`（如 `/api/v1/chats`）
 
 ### 鉴权体系
 
 ```
-Authorization Header
+Authorization 请求头
     │
     ├── JWT Token（itsdangerous URLSafeTimedSerializer）
-    │   └── 反序列化 → 查 User 表 → g.user
+    │   编码稳定的 user.id，服务重启后仍有效（SECRET_KEY 持久化在 conf/service_conf.yaml）
+    │   └── 解码 user.id → 查 User 表 → g.user
     │
-    └── API Token（Bearer xxx）
-        └── 查 APIToken 表 → 查 User 表 → g.user
+    └── access_token（兜底，适用于旧客户端）
+        └── 直接查 User.access_token 字段 → g.user
 ```
 
-`login_required` 装饰器包装所有需要鉴权的路由。
+登录 / 注册成功后，JWT 通过 `Authorization` 响应头返回，前端存入 `localStorage['qh_token']`，后续请求作为 `Authorization` 请求头发送。
 
 ### 数据模型（Peewee ORM）
 
 核心表关系：
 
 ```
-User (用户账户)
-  ├── Knowledgebase (知识库)
-  │     └── Document (文档)
-  │           └── File2Document ← File (文件树)
-  ├── Dialog (对话应用)
-  │     └── Conversation (会话)
-  │           ├── message (JSON 消息数组)
-  │           └── reference (JSON 引用数组，与消息并行)
-  ├── LLM 配置表 (用户 LLM 配置)
-  ├── Task (文档解析任务)
-  └── EvaluationDataset → EvaluationRun → EvaluationResult
+User（用户账户）
+  ├── Knowledgebase（知识库）
+  │     └── Document（文档）
+  │           └── File2Document ← File（文件树）
+  ├── Dialog（对话应用配置，绑定知识库）
+  │     └── Conversation（会话）
+  │           ├── message（JSON 消息数组）
+  │           └── reference（JSON 引用数组，与消息并行）
+  ├── LLMFactory / TenantLLM（LLM 供应商与模型配置）
+  └── Task（文档解析任务，含进度追踪）
 ```
 
 ---
@@ -466,17 +455,16 @@ User (用户账户)
 | **Embedding** | BAAI/bge-m3 | 1024 维稠密向量，中英双语 |
 | **Reranker** | BAAI/bge-reranker-v2-m3 | Cross-Encoder 精排 |
 | **向量 + 全文** | Elasticsearch 8.x | 混合索引 + 加权融合检索 |
-| **主力 LLM** | DeepSeek（deepseek-chat） | 默认生成模型 |
-| **备选 LLM** | Qwen（qwen-max） | 服务降级自动切换 |
+| **LLM** | 可配置（默认 DeepSeek） | 支持所有兼容 OpenAI 接口的供应商，配置备选模型实现自动降级 |
 | **关系数据库** | MySQL 8.0 | 用户、会话、知识库元数据 |
-| **缓存 / 队列** | Redis（Valkey 8） | 会话存储、分布式锁、任务队列 |
+| **缓存 / 队列** | Redis（Valkey 8） | 分布式锁、任务队列、SECRET_KEY 持久化 |
 | **对象存储** | MinIO | 上传文件存储 |
 | **后端框架** | Python / Quart | 异步 Web 服务（Flask 兼容 API） |
 | **ORM** | Peewee | 轻量级 ORM，连接池 + 自动重连 |
 | **前端框架** | React 18 / TypeScript | SPA 应用 |
 | **UI 组件** | Radix UI + Tailwind CSS | 无障碍组件 + 原子化样式 |
 | **构建工具** | Vite 7 | 前端打包 |
-| **容器化** | Docker Compose | 一键部署（MySQL + ES + Redis + MinIO + Nginx） |
+| **容器化** | Docker Compose | 一键部署（MySQL + ES + Redis + MinIO + Backend + Nginx） |
 
 ---
 
@@ -494,7 +482,7 @@ User (用户账户)
 ```bash
 # 1. 配置 API Key
 cp docker/.env.example docker/.env
-# 编辑 docker/.env，至少填写 DEEPSEEK_API_KEY
+# 编辑 docker/.env，至少填写主力 LLM 的 API Key
 
 # 2. 启动所有服务
 cd docker
@@ -522,13 +510,13 @@ python api/ragflow_server.py
 # 3. 前端（新终端）
 cd web
 npm install
-npm run dev          # 开发服务器 http://localhost:9222
+npm run dev          # 开发服务器，默认 http://localhost:9222
 ```
 
 ### 知识库配置
 
-1. 访问 Web UI，注册/登录
-2. 创建知识库，配置：
+1. 访问 Web UI，注册 / 登录
+2. 通过 `/v1/kb/` 接口或前端页面创建知识库，配置：
    - **PDF 临床指南**：解析方式 `MinerU`，切块策略 `Hierarchical`
    - **医疗对话数据**：解析方式 `Q&A`，上传 JSON / JSONL / CSV
 3. Embedding 模型选择 `BAAI/bge-m3`
@@ -544,6 +532,7 @@ npm run dev          # 开发服务器 http://localhost:9222
 RAG-MedQA:
   host: 0.0.0.0
   http_port: 9380
+  secret_key: 'your-stable-secret-key-min-32-chars'   # JWT 签名密钥，重启后保持不变
 
 mysql:
   name: 'rag_flow'
@@ -565,23 +554,26 @@ user_default_llm:
   factory: 'DeepSeek'
   api_key: 'sk-xxxxxxxx'
   base_url: 'https://api.deepseek.com/v1'
+  default_models:
+    chat_model: 'deepseek-chat'
+    embedding_model: 'BAAI/bge-m3'
+    rerank_model: 'BAAI/bge-reranker-v2-m3'
 ```
 
 ### 环境变量（`docker/.env`）
 
 | 变量 | 必需 | 默认值 | 说明 |
 |---|---|---|---|
-| `DEEPSEEK_API_KEY` | 是 | — | 主力 LLM API Key |
-| `QWEN_API_KEY` | 推荐 | — | 备选 LLM API Key |
 | `MYSQL_ROOT_PASSWORD` | 否 | `infini_rag_flow` | MySQL root 密码 |
 | `REDIS_PASSWORD` | 否 | `infini_rag_flow` | Redis 密码 |
-| `QUART_RESPONSE_TIMEOUT` | 否 | `600` | 后端响应超时（秒） |
-| `REGISTER_ENABLED` | 否 | `1` | 0 = 关闭注册 |
-| `MEDICAL_DISCLAIMER_ENABLED` | 否 | `true` | 是否注入医疗免责声明 |
+| `QUART_RESPONSE_TIMEOUT` | 否 | `600` | 后端响应超时（秒），本地 CPU 推理时建议调大 |
+| `REGISTER_ENABLED` | 否 | `1` | `0` = 关闭新用户注册 |
+| `FALLBACK_LLM_FACTORY` | 否 | — | 备选 LLM 供应商（如 `Qwen`），主力不可用时自动切换 |
+| `FALLBACK_LLM_NAME` | 否 | — | 备选 LLM 模型名（如 `qwen-max`） |
 
 ### LLM 供应商注册
 
-`conf/llm_factories.json` 定义了所有可用的 LLM 供应商（DeepSeek、OpenAI、Qwen、Zhipu 等），包括各供应商的模型列表、API 端点模板、定价等信息。
+`conf/llm_factories.json` 定义了所有可用的 LLM 供应商（DeepSeek、OpenAI、Qwen、Zhipu 等），包括各供应商的模型列表和 API 端点模板。
 
 ---
 
@@ -596,7 +588,7 @@ uv sync --python 3.12
 # 启动（开发模式，支持热重载）
 python api/ragflow_server.py --debug
 
-# 初始化超级用户
+# 初始化超级用户（首次部署）
 python api/ragflow_server.py --init-superuser
 ```
 
@@ -611,65 +603,97 @@ npm run build     # 生产构建，输出到 web/dist/
 
 ### 添加新的 API 路由
 
-在 `api/apps/sdk/` 下新建 `xxx_app.py`，定义 `manager`（Blueprint）和路由处理函数。系统启动时自动发现并注册。
+在 `api/apps/sdk/` 下新建 `xxx_app.py`，定义 `manager`（Blueprint）和路由处理函数，系统启动时自动发现并注册到 `/api/v1/` 前缀下。
 
 ### 添加新的文档解析器
 
 1. 在 `rag/app/` 下实现分块逻辑（参考 `qa.py`）
-2. 解析器列表由 `common/settings.py` 中的 `PARSERS` 变量控制，默认值从 `user_default_llm.parsers` 配置项读取
+2. 解析器列表由 `common/settings.py` 中的 `PARSERS` 变量控制
 
 ---
 
 ## API 接口
 
+### 用户认证
+
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| `POST` | `/v1/user/login` | 用户登录（RSA 加密密码） |
-| `POST` | `/v1/user/register` | 用户注册 |
+| `POST` | `/v1/user/login` | 登录（RSA 加密密码），JWT 通过 `Authorization` 响应头返回 |
+| `POST` | `/v1/user/register` | 注册，同上返回 JWT |
 | `GET` | `/v1/user/logout` | 退出登录 |
-| `PUT` | `/v1/user/setting` | 修改昵称/头像 |
-| `POST` | `/v1/user/password` | 修改密码 |
-| `GET` | `/api/v1/chats/{dialog_id}/sessions` | 获取会话列表 |
-| `POST` | `/api/v1/chats/{dialog_id}/sessions` | 创建新会话 |
-| `GET` | `/api/v1/chats/{dialog_id}/sessions/{id}` | 获取单个会话详情 |
-| `PUT` | `/api/v1/chats/{dialog_id}/sessions/{id}` | 重命名会话 |
+| `GET` | `/v1/user/info` | 当前用户信息 |
+| `POST` | `/v1/user/setting` | 修改昵称 / 头像 |
+| `POST` | `/v1/user/forget/otp` | 发送密码重置验证码 |
+| `POST` | `/v1/user/forget/verify-otp` | 验证 OTP |
+| `POST` | `/v1/user/forget/reset-password` | 重置密码 |
+
+### 对话与会话
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/chats` | 获取对话应用列表 |
+| `POST` | `/api/v1/chats` | 创建对话应用 |
+| `GET` | `/api/v1/chats/{chat_id}` | 获取对话应用详情 |
+| `PUT` | `/api/v1/chats/{chat_id}` | 更新对话应用配置 |
+| `DELETE` | `/api/v1/chats/{chat_id}` | 删除对话应用 |
+| `GET` | `/api/v1/chats/{chat_id}/sessions` | 获取会话列表 |
+| `POST` | `/api/v1/chats/{chat_id}/sessions` | 创建新会话 |
+| `GET` | `/api/v1/chats/{chat_id}/sessions/{id}` | 获取单个会话详情（含历史消息） |
+| `PUT` | `/api/v1/chats/{chat_id}/sessions/{id}` | 重命名会话 |
 | `POST` | `/api/v1/chats/ask` | **核心接口**：提交问题，SSE 流式返回答案 + 引用 |
-| `GET` | `/api/v1/knowledgebases` | 知识库列表 |
-| `POST` | `/api/v1/knowledgebases` | 创建知识库 |
-| `POST` | `/api/v1/documents` | 上传文档 |
+
+### 知识库
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/v1/kb/detail` | 知识库详情 |
+| `POST` | `/v1/kb/list` | 知识库列表（支持分页 / 过滤） |
+| `POST` | `/v1/kb/create` | 创建知识库 |
+| `POST` | `/v1/kb/update` | 更新知识库配置 |
 
 ### SSE 响应格式
 
 ```
+# 流式帧（incremental token）
 data:{"code":0,"data":{"answer":"高血压","reference":{},"final":false}}
 
-data:{"code":0,"data":{"answer":"患者","reference":{},"final":false}}
+# 最终帧（含完整答案和引用）
+data:{"code":0,"data":{"answer":"高血压患者应注意[ID:0]低盐饮食...","reference":{"chunks":[...]},"final":true}}
 
-data:{"code":0,"data":{"answer":"应注意低盐饮食[ID:0]，每日...","reference":{"chunks":[...]},"final":true}}
-
+# 结束信号
 data:{"code":0,"data":true}
 ```
 
-- 流式帧：`final: false`，`answer` 为增量 token batch
-- 最终帧：`final: true`，`answer` 含完整答案 + `[ID:N]` 引用，`reference` 含来源 chunks
-- 结束信号：`data: true`
+- **流式帧**：`final: false`，`answer` 为增量 token
+- **最终帧**：`final: true`，`answer` 含完整答案 + `[ID:N]` 引用，`reference` 含来源 chunks
+- **结束信号**：`data: true`
 
 ---
 
-## 评估体系
+## 离线评估
 
-系统内置 RAG 评估管道，通过 API 管理数据集和测试用例，运行评估并查看指标。
+系统提供独立的离线检索评估工具（`evaluation/`），直接连接 ES 运行，无需启动后端服务。
 
-### 数据模型
+### 数据集格式（JSONL）
 
-| 表 | 说明 |
-|---|---|
-| `EvaluationDataset` | 评估数据集，绑定知识库，包含 ground truth 测试用例 |
-| `EvaluationCase` | 单条测试用例：问题、参考答案、预期召回文档/ chunk |
-| `EvaluationRun` | 一次评估运行，关联数据集和对话配置 |
-| `EvaluationResult` | 每条 case 的实际输出：生成答案、检索 chunk 列表、各项指标 |
+```jsonl
+{"question": "高血压患者饮食注意事项？", "reference_answer": "低盐低脂，每日食盐<6g", "relevant_chunk_ids": ["chunk_001"]}
+{"question": "降压药什么时候服用效果最好？", "reference_answer": "清晨空腹服用长效降压药"}
+```
 
-### 已实现的指标
+### 运行评估
+
+```bash
+# 配置 ES 连接信息
+cp evaluation/config.py.example evaluation/config.py  # 按需编辑
+
+# 运行评估
+python evaluation/run_eval.py
+
+# 结果输出到 evaluation/results/run_YYYYMMDD_HHMMSS.json
+```
+
+### 已实现指标
 
 | 指标 | 说明 |
 |---|---|
@@ -678,62 +702,6 @@ data:{"code":0,"data":true}
 | `f1_score` | Precision 和 Recall 的调和平均 |
 | `hit_rate` | 是否至少命中一个相关 chunk |
 | `mrr` | 首个相关 chunk 排名的倒数均值（Mean Reciprocal Rank） |
-| `answer_length` | 生成答案的字符数 |
-| `has_answer` | 是否生成了非空答案 |
-
-### 待实现（需要 LLM-as-judge）
-
-使用 LLM 作为评判者自动评估生成质量，目前为预留接口：
-
-- **Faithfulness**（忠实度）：生成答案是否与检索上下文一致，有无幻觉
-- **Answer Relevance**（答案相关性）：答案是否切题
-- **Context Relevance**（上下文相关性）：检索到的 chunk 与问题的相关程度
-
-### API 端点
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| `POST` | `/v1/evaluation/datasets` | 创建评估数据集 |
-| `GET` | `/v1/evaluation/datasets` | 数据集列表 |
-| `GET` | `/v1/evaluation/datasets/:id` | 数据集详情（含测试用例） |
-| `PUT` | `/v1/evaluation/datasets/:id` | 更新数据集 |
-| `DELETE` | `/v1/evaluation/datasets/:id` | 删除数据集 |
-| `POST` | `/v1/evaluation/datasets/:id/cases` | 添加测试用例 |
-| `POST` | `/v1/evaluation/datasets/:id/cases/import` | 批量导入测试用例 |
-| `DELETE` | `/v1/evaluation/datasets/:id/cases/:cid` | 删除测试用例 |
-| `POST` | `/v1/evaluation/runs` | 启动评估运行 |
-| `GET` | `/v1/evaluation/runs` | 运行列表 |
-| `GET` | `/v1/evaluation/runs/:id` | 运行详情（含逐 case 指标） |
-| `GET` | `/v1/evaluation/runs/:id/recommendations` | 配置优化建议 |
-
-### 使用示例
-
-```bash
-# 1. 创建评估数据集
-curl -X POST http://localhost:9380/v1/evaluation/datasets \
-  -H "Authorization: <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"高血压问答评测","kb_ids":["kb_xxx"],"description":"验证高血压相关检索和生成质量"}'
-
-# 2. 批量导入测试用例
-curl -X POST http://localhost:9380/v1/evaluation/datasets/<dataset_id>/cases/import \
-  -H "Authorization: <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"cases":[
-    {"question":"高血压患者饮食注意事项？","reference_answer":"低盐低脂，每日食盐<6g","relevant_chunk_ids":["chunk_001"]},
-    {"question":"降压药什么时候服用效果最好？","reference_answer":"清晨空腹服用长效降压药"}
-  ]}'
-
-# 3. 运行评估
-curl -X POST http://localhost:9380/v1/evaluation/runs \
-  -H "Authorization: <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"dataset_id":"<dataset_id>","dialog_id":"<dialog_id>"}'
-
-# 4. 查看结果
-curl http://localhost:9380/v1/evaluation/runs/<run_id> \
-  -H "Authorization: <token>"
-```
 
 ---
 
