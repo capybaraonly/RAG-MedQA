@@ -658,46 +658,31 @@ data:{"code":0,"data":true}
 ### 数据集格式（JSONL）
 
 ```jsonl
-{"id": "qa_0001", "question": "高血压患者饮食注意事项？", "reference_answer": "低盐低脂，每日食盐<6g..."}
-{"id": "qa_0002", "question": "降压药什么时候服用效果最好？", "reference_answer": "清晨空腹服用长效降压药..."}
+{"question": "高血压患者饮食注意事项？", "reference_answer": "低盐低脂，每日食盐<6g", "relevant_chunk_ids": ["chunk_001"]}
+{"question": "降压药什么时候服用效果最好？", "reference_answer": "清晨空腹服用长效降压药"}
 ```
 
 ### 运行评估
 
 ```bash
-# 1. 构建评估数据集（从训练集采样 200 条）
-python evaluation/build_dataset.py
+# 配置 ES 连接信息
+cp evaluation/config.py.example evaluation/config.py  # 按需编辑
 
-# 2. 运行评估（直连 ES，无需启动后端）
+# 运行评估
 python evaluation/run_eval.py
 
 # 结果输出到 evaluation/results/run_YYYYMMDD_HHMMSS.json
 ```
 
-### 评估指标
+### 已实现指标
 
 | 指标 | 说明 |
 |---|---|
-| `hit_rate` | 至少命中一个相关 chunk 的问题占比（= Recall@K） |
-| `recall@1/3/5/10` | 首个相关 chunk 排在前 N 名内的问题占比 |
-| `mrr` | 首个相关 chunk 排名倒数的均值（Mean Reciprocal Rank） |
-
-命中判定标准：检索到的 chunk 与标准答案之间的 Token Overlap F1 ≥ 0.3。
-
-### 当前评估结果
-
-> 数据集：从 79 万条医疗对话中按科室均匀采样 200 条，固定随机种子 42。  
-> 检索方式：ES `multi_match`（纯 BM25，不含向量检索），K=10。
-
-| 指标 | 值 |
-|---|---|
-| **Recall@10 (hit_rate)** | **96.50%** |
-| Recall@1 | 88.00% |
-| Recall@3 | 93.00% |
-| Recall@5 | 93.50% |
-| **MRR** | **0.9095** |
-
-R@1 = 88% 说明约 88% 的问题答案出现在检索结果第一位；MRR ≈ 0.91 说明平均首个命中排名极靠前，纯 BM25 在本数据集上已有强劲基准。
+| `precision` | 检索 chunk 中相关 chunk 的占比 |
+| `recall` | 所有相关 chunk 中被检索到的比例 |
+| `f1_score` | Precision 和 Recall 的调和平均 |
+| `hit_rate` | 是否至少命中一个相关 chunk |
+| `mrr` | 首个相关 chunk 排名的倒数均值（Mean Reciprocal Rank） |
 
 ---
 
