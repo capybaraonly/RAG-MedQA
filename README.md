@@ -36,7 +36,7 @@
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Quart 异步 Web 服务                        │
-│         路由发现 → JWT 鉴权 → 会话管理 → 对话流程编排             │
+│              路由发现 → 会话管理 → 对话流程编排                    │
 └──────────┬────────────┬────────────┬────────────┬───────────┘
            │            │            │            │
            ▼            ▼            ▼            ▼
@@ -45,8 +45,6 @@
 │  用户&会话   │ │ 向量+全文索引 │  │  锁/队列    │ │  文件存储     │
 └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ```
-
-> **单租户架构**：系统以单一固定租户（`SYSTEM_TENANT_ID`）运行，无多租户隔离层。所有知识库、对话、用户均在同一命名空间下共享资源。
 
 **请求链路**（一次问答的完整路径）：
 
@@ -234,7 +232,7 @@ LLM 以 SSE（Server-Sent Events）流式输出，每个事件携带增量 token
 RAG-MedQA/
 ├── api/                          # 后端服务
 │   ├── apps/                     # Quart 应用 + API 路由模块
-│   │   ├── __init__.py           # 应用工厂：Quart 实例化、JWT 鉴权、蓝图自动发现、SPA 静态托管
+│   │   ├── __init__.py           # 应用工厂：Quart 实例化、蓝图自动发现、SPA 静态托管
 │   │   ├── sdk/chat.py           # 对话 / 会话 / 问答 接口（/api/v1/chats/...）
 │   │   ├── kb_app.py             # 知识库管理（/v1/kb/...）
 │   │   ├── llm_app.py            # LLM 模型配置（/v1/llm/...）
@@ -304,11 +302,11 @@ RAG-MedQA/
 ├── common/                       # 共享模块
 │   ├── settings.py               # 全局配置初始化
 │   ├── config_utils.py           # YAML 配置读取 + 解密
-│   ├── constants.py              # 常量定义（含 SYSTEM_TENANT_ID）
+│   ├── constants.py              # 常量定义
 │   └── file_utils.py             # 文件路径工具
 │
 ├── conf/
-│   ├── service_conf.yaml         # 主配置文件（数据库、ES、模型、SECRET_KEY）
+│   ├── service_conf.yaml         # 主配置文件（数据库、ES、模型）
 │   ├── llm_factories.json        # LLM 供应商注册表
 │   └── *.json                    # ES mapping 模板
 │
@@ -397,7 +395,7 @@ export function renderWithCitations(content: string, refs?: Reference) {
 ```
 ragflow_server.py
   → init_root_logger()                # 日志初始化
-  → settings.init_settings()          # 全局配置加载（DB、ES、LLM、SECRET_KEY）
+  → settings.init_settings()          # 全局配置加载（DB、ES、LLM）
   → init_web_db()                     # Peewee 建表 / 迁移
   → init_web_data()                   # 初始数据填充
   → RuntimeConfig.init_env()          # 运行时配置
@@ -411,21 +409,6 @@ ragflow_server.py
 
 - `api/apps/*_app.py` → 前缀 `/{version}/{page_name}`（如 `/v1/kb`、`/v1/user`）
 - `api/apps/sdk/*.py` → 前缀 `/api/{version}`（如 `/api/v1/chats`）
-
-### 鉴权体系
-
-```
-Authorization 请求头
-    │
-    ├── JWT Token（itsdangerous URLSafeTimedSerializer）
-    │   编码稳定的 user.id，服务重启后仍有效（SECRET_KEY 持久化在 conf/service_conf.yaml）
-    │   └── 解码 user.id → 查 User 表 → g.user
-    │
-    └── access_token（兜底，适用于旧客户端）
-        └── 直接查 User.access_token 字段 → g.user
-```
-
-登录 / 注册成功后，JWT 通过 `Authorization` 响应头返回，前端存入 `localStorage['qh_token']`，后续请求作为 `Authorization` 请求头发送。
 
 ### 数据模型（Peewee ORM）
 
@@ -457,7 +440,7 @@ User（用户账户）
 | **向量 + 全文** | Elasticsearch 8.x | 混合索引 + 加权融合检索 |
 | **LLM** | 可配置（默认 DeepSeek） | 支持所有兼容 OpenAI 接口的供应商，配置备选模型实现自动降级 |
 | **关系数据库** | MySQL 8.0 | 用户、会话、知识库元数据 |
-| **缓存 / 队列** | Redis（Valkey 8） | 分布式锁、任务队列、SECRET_KEY 持久化 |
+| **缓存 / 队列** | Redis（Valkey 8） | 分布式锁、任务队列 |
 | **对象存储** | MinIO | 上传文件存储 |
 | **后端框架** | Python / Quart | 异步 Web 服务（Flask 兼容 API） |
 | **ORM** | Peewee | 轻量级 ORM，连接池 + 自动重连 |
@@ -532,8 +515,6 @@ npm run dev          # 开发服务器，默认 http://localhost:9222
 RAG-MedQA:
   host: 0.0.0.0
   http_port: 9380
-  secret_key: 'your-stable-secret-key-min-32-chars'   # JWT 签名密钥，重启后保持不变
-
 mysql:
   name: 'rag_flow'
   user: 'root'
@@ -618,8 +599,8 @@ npm run build     # 生产构建，输出到 web/dist/
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| `POST` | `/v1/user/login` | 登录（RSA 加密密码），JWT 通过 `Authorization` 响应头返回 |
-| `POST` | `/v1/user/register` | 注册，同上返回 JWT |
+| `POST` | `/v1/user/login` | 登录（RSA 加密密码） |
+| `POST` | `/v1/user/register` | 注册 |
 | `GET` | `/v1/user/logout` | 退出登录 |
 | `GET` | `/v1/user/info` | 当前用户信息 |
 | `POST` | `/v1/user/setting` | 修改昵称 / 头像 |
