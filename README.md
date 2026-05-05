@@ -667,22 +667,13 @@ data:{"code":0,"data":true}
 评估脚本直接连接 ES 和 Embedding HTTP 服务，复现完整生产 pipeline，**无需启动后端**：
 
 ```bash
-# 1. 构建评估数据集（从训练集采样 200 条，固定随机种子，可复现）
+# 1. 构建评估数据集（从训练集采样 200 条）
 python evaluation/build_dataset.py
 
-# 2. 单次评估（使用生产参数）
+# 2. 运行评估（需要 ES 和 Embedding 服务在运行）
 python evaluation/run_eval.py
 
-# 3. 网格搜索（扫描混合比例、top-N、重排权重等参数组合）
-python evaluation/grid_search.py
-
-# 结果输出到 evaluation/results/
-```
-
-`run_eval.py` 支持命令行覆盖参数：
-
-```bash
-python evaluation/run_eval.py --knn-weight 0.9 --top-n 5 --threshold 0.1
+# 结果输出到 evaluation/results/run_YYYYMMDD_HHMMSS.json
 ```
 
 ### 评估 Pipeline
@@ -690,39 +681,33 @@ python evaluation/run_eval.py --knn-weight 0.9 --top-n 5 --threshold 0.1
 评估脚本复现生产检索的完整链路（对齐 `rag/nlp/search.py:Dealer.retrieval()`）：
 
 ```
-问题 → BGE-m3 Embedding
-     → ES 混合检索（knn_weight×KNN + (1-knn_weight)×BM25，候选 top=1024）
-     → 规则重排序（vt_weight×cosine + tk_weight×token_overlap）
-     → 过滤 sim ≥ threshold → top-N 传给 LLM
+问题 → BGE-m3 Embedding → ES 混合检索（0.95×KNN + 0.05×BM25，候选 top=1024）
+     → 规则重排序（0.3×cosine + 0.7×token_overlap）→ 过滤 sim≥0.2 → top-6
 ```
-
-`grid_search.py` 对 knn_weight 按批次做 ES 查询（带缓存），rerank 参数全部离线枚举，避免重复网络调用。
 
 ### 评估指标
 
 | 指标 | 说明 |
 |---|---|
-| `R@K` | 首个相关 chunk 排在前 K 名内的问题占比（K = 1 / 3 / 5 / 10） |
-| `hit_rate@N` | 在生产 top-N 窗口内至少命中一个相关 chunk 的问题占比 |
-| `MRR` | 首个相关 chunk 排名倒数的均值（Mean Reciprocal Rank） |
+| `hit_rate` | 至少命中一个相关 chunk 的问题占比 |
+| `recall@K` | 首个相关 chunk 排在前 K 名内的问题占比 |
+| `mrr` | 首个相关 chunk 排名倒数的均值（Mean Reciprocal Rank） |
 
-命中判定：chunk 与标准答案的 Token Overlap F1 ≥ 0.3。
+命中判定：检索到的 chunk 与标准答案之间的 Token Overlap F1 ≥ 0.3。
 
-### 评估结果对比
+### 当前评估结果
 
-> 数据集：从 79 万条医疗对话按科室均匀采样 200 条，固定随机种子 42。
+> 数据集：从 79 万条医疗对话中按科室均匀采样 200 条，固定随机种子 42。  
+> Pipeline：BGE-m3 混合检索 + 规则重排序，top-6 传给 LLM，对齐生产配置。
 
-| 指标 | 纯 BM25<br>（K=10） | 混合检索 + 规则重排<br>（生产配置，top-6） |
-|---|---|---|
-| R@1 | 88.0% | **99.5%** |
-| R@3 | 93.0% | **100.0%** |
-| R@5 | 93.5% | **100.0%** |
-| R@10 | 96.5% | — |
-| hit_rate | 96.5% | **100.0%** |
-| MRR | 0.9095 | **0.9975** |
+| 指标 | 值 |
+|---|---|
+| **hit_rate (R@6)** | **100.00%** |
+| Recall@1 | 99.50% |
+| Recall@3 | 100.00% |
+| **MRR** | **0.9975** |
 
-生产配置：KNN:BM25 = 0.95:0.05，规则重排 vt=0.3 / tk=0.7，sim_threshold=0.2，top-6。  
-R@10 在混合检索评测中未单独列出（top-N=6 时 R@3 已达 100%，更大 K 无实际意义）。
+R@1 = 99.5% 说明几乎所有问题的相关 chunk 都出现在第一位；hit_rate = 100% 说明在 top-6 窗口内无漏召。
 
 ---
 
